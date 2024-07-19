@@ -24,6 +24,8 @@ import com.synopsys.integration.function.ThrowingFunction;
 import com.synopsys.integration.rest.body.BodyContent;
 import com.synopsys.integration.rest.body.MultipartBodyContent;
 import com.synopsys.integration.rest.response.Response;
+import java.io.File;
+import java.util.HashMap;
 
 /**
  * Uploader implementation for Binary uploads.
@@ -62,15 +64,14 @@ public class BinaryUploader extends AbstractUploader<BinaryUploadStatus> {
      */
     @Override
     protected BodyContent createBodyContent(Path filePath) {
-        return new MultipartBodyContent(
-            Map.of("fileupload", filePath.toFile()),
-            Map.of(
-                "projectName", binaryScanRequestData.getProjectName(),
-                "version", binaryScanRequestData.getVersion(),
-                "codeLocationName", binaryScanRequestData.getCodeLocationName().orElse(""),
-                "codeLocationUri", binaryScanRequestData.getCodeLocationUri().orElse("")
-            )
-        );
+        final Map<String, File> contentMap = new HashMap<>();
+        contentMap.put("fileupload", filePath.toFile());
+        final Map<String, String> metaDataMap = new HashMap<>();
+        metaDataMap.put("projectName", binaryScanRequestData.getProjectName());
+        metaDataMap.put("version", binaryScanRequestData.getVersion());
+        metaDataMap.put("codeLocationName", binaryScanRequestData.getCodeLocationName().orElse(""));
+        metaDataMap.put("codeLocationUri", binaryScanRequestData.getCodeLocationUri().orElse(""));
+        return new MultipartBodyContent(contentMap, metaDataMap);
     }
 
     /**
