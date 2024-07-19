@@ -64,15 +64,13 @@ public class BinaryUploader extends AbstractUploader<BinaryUploadStatus> {
      */
     @Override
     protected BodyContent createBodyContent(Path filePath) {
-        final Map<String, File> contentMap = new HashMap<String, File>() {{
-            put("fileupload", filePath.toFile());
-        }};
-        final Map<String, String> metaDataMap = new HashMap<String, String>() {{
-            put("projectName", binaryScanRequestData.getProjectName());
-            put("version", binaryScanRequestData.getVersion());
-            put("codeLocationName", binaryScanRequestData.getCodeLocationName().orElse(""));
-            put("codeLocationUri", binaryScanRequestData.getCodeLocationUri().orElse(""));
-        }};
+        final Map<String, File> contentMap = new HashMap<>();
+        contentMap.put("fileupload", filePath.toFile());
+        final Map<String, String> metaDataMap = new HashMap<>();
+        metaDataMap.put("projectName", binaryScanRequestData.getProjectName());
+        metaDataMap.put("version", binaryScanRequestData.getVersion());
+        metaDataMap.put("codeLocationName", binaryScanRequestData.getCodeLocationName().orElse(""));
+        metaDataMap.put("codeLocationUri", binaryScanRequestData.getCodeLocationUri().orElse(""));
         return new MultipartBodyContent(contentMap, metaDataMap);
     }
 
