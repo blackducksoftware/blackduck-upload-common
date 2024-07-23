@@ -14,6 +14,10 @@ ext {
     javaTargetCompatibility = JavaVersion.VERSION_1_8
 }
 
+tasks.compileJava {
+    options.release = 8
+}
+
 group 'com.synopsys.integration'
 version = '1.0.2-SNAPSHOT'
 

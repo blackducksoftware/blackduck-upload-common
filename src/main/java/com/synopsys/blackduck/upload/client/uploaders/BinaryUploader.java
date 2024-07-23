@@ -81,7 +81,9 @@ public class BinaryUploader extends AbstractUploader<BinaryUploadStatus> {
      */
     @Override
     protected Map<String, String> getMultipartUploadStartRequestHeaders() {
-        return Map.of(HttpHeaders.CONTENT_TYPE, ContentTypes.APPLICATION_BINARY_MULTIPART_UPLOAD_START_V1);
+        Map<String, String> headers = new HashMap<>();
+        headers.put(HttpHeaders.CONTENT_TYPE, ContentTypes.APPLICATION_BINARY_MULTIPART_UPLOAD_START_V1);
+        return headers;
     }
 
     /**
