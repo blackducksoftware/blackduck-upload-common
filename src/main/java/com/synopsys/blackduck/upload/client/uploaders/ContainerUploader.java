@@ -1,6 +1,7 @@
 package com.synopsys.blackduck.upload.client.uploaders;
 
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
@@ -58,7 +59,9 @@ public class ContainerUploader extends AbstractUploader<UploadStatus> {
      */
     @Override
     protected Map<String, String> getMultipartUploadStartRequestHeaders() {
-        return Map.of(HttpHeaders.CONTENT_TYPE, ContentTypes.APPLICATION_MULTIPART_UPLOAD_START_V1);
+        Map<String, String> headers = new HashMap<>();
+        headers.put(HttpHeaders.CONTENT_TYPE, ContentTypes.APPLICATION_MULTIPART_UPLOAD_START_V1);
+        return headers;
     }
 
     /**

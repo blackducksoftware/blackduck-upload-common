@@ -1,6 +1,7 @@
 package com.synopsys.blackduck.upload.validation;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -50,14 +51,14 @@ public class UploaderValidationException extends IntegrationException implements
      */
     public UploaderValidationException(Throwable cause) {
         super(cause);
-        this.uploadErrors = List.of();
+        this.uploadErrors = new ArrayList<>();
     }
 
     /**
      * Constructs an empty exception.
      */
     public UploaderValidationException() {
-        this.uploadErrors = List.of();
+        this.uploadErrors = new ArrayList<>();
     }
 
     /**
