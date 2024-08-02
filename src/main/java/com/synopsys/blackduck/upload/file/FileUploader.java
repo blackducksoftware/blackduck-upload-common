@@ -230,7 +230,7 @@ public class FileUploader {
             logger.debug("Executor service terminated: {}", success);
             // if the timeout occurred cancel the upload.
             if(!success) {
-                logger.debug("Executor service timed out.");
+                logger.error("Upload timed out. Cancelling upload.");
                 cancelUpload(uploadUrl);
             }
             if (isCanceled) {
