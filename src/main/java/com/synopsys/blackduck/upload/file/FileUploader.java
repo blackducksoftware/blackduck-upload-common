@@ -136,7 +136,11 @@ public class FileUploader {
         try {
             String uploadUrl = startMultipartUpload(mutableResponseStatus, multipartUploadStartRequestHeaders, multipartUploadStartRequest);
             Map<Integer, String> uploadedParts = multipartUploadParts(mutableResponseStatus, multipartUploadFileMetadata, uploadUrl);
-            verifyAllPartsUploaded(multipartUploadFileMetadata, uploadedParts);
+            boolean allPartsUploaded = verifyAllPartsUploaded(multipartUploadFileMetadata, uploadedParts);
+            if(!allPartsUploaded) {
+                cancelUpload(uploadUrl);
+                throw new IntegrationException("The number of parts uploaded does not match the number of parts uploaded.");
+            }
             return finishMultipartUpload(mutableResponseStatus, uploadUrl, uploadStatusFunction);
         } catch (IntegrationException ex) {
             return uploadStatusErrorFunction.apply(mutableResponseStatus, ex);
@@ -205,8 +209,8 @@ public class FileUploader {
 
             //TODO: By default, we want to use a multithreaded pool. We may want to have this configurable and enable this for the purposes of testing.
             // See HUB-42207 for more info. FileUploaderTest may also need to be updated for multithreaded cases.
-            //TODO: Sample multithreaded : ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), Executors.defaultThreadFactory())
-
+            // ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), Executors.defaultThreadFactory());
+            logger.debug("Submitting {} upload requests into executor service.", multipartUploadFileMetadata.getFileChunks().size());
             for (MultipartUploadFilePart part : multipartUploadFileMetadata.getFileChunks()) {
                 executorService.submit(() -> {
                     boolean partUploaded = false;
@@ -223,8 +227,11 @@ public class FileUploader {
                     }
                 });
             }
+            logger.debug("All {} upload requests submitted into executor service.", multipartUploadFileMetadata.getFileChunks().size());
             executorService.shutdown();
+            logger.debug("Awaiting for executor service to complete or timeout of {} minutes occurs.", multipartUploadTimeoutInMinutes);
             boolean success = executorService.awaitTermination(multipartUploadTimeoutInMinutes, TimeUnit.MINUTES);
+            logger.debug("Executor service terminated: {}", success);
             if (isCanceled) {
                 logger.info("Upload was cancelled. Check log for errors.");
             } else if (success) {
@@ -257,7 +264,7 @@ public class FileUploader {
             .method(HttpMethod.PUT)
             .headers(createUploadHeaders(fileMetaData, part));
 
-        while (retryCount <= multipartUploadPartRetryAttempts) {
+        while (retryCount <= multipartUploadPartRetryAttempts && !isCanceled) {
             if (retryCount > 0) {
                 logger.info("Retry attempt {} for uploading of part {}", retryCount, part);
                 if (multipartUploadPartRetryInitialInterval > 0) {
@@ -295,7 +302,8 @@ public class FileUploader {
             retryCount += 1;
         }
 
-        logger.error("Upload of part failed {}", part);
+        String status = isCanceled ? "cancelled" : "failed";
+        logger.error("Upload of part {} {}", status, part);
         return false;
     }
 
@@ -410,17 +418,18 @@ public class FileUploader {
         return requestHeaders;
     }
 
-    private void verifyAllPartsUploaded(MultipartUploadFileMetadata multipartUploadFileMetaData, Map<Integer, String> uploadedParts) throws IntegrationException {
+    private boolean verifyAllPartsUploaded(MultipartUploadFileMetadata multipartUploadFileMetaData, Map<Integer, String> uploadedParts) throws IntegrationException {
         int actual = uploadedParts.size();
         int expected = multipartUploadFileMetaData.getFileChunks().size();
         if (expected != actual) {
             String message = String.format(
-                "The number of parts uploaded does not match the number of parts created. Uploaded %d of %d expected parts",
+                "The number of parts uploaded does not match the number of parts created. Uploaded %d of %d expected parts.",
                 actual,
                 expected
             );
             logger.error(message);
-            throw new IntegrationException("The number of parts uploaded does not match the number of parts uploaded. Expected: " + expected + ", Actual: " + actual);
+            return false;
         }
+        return true;
     }
 }
