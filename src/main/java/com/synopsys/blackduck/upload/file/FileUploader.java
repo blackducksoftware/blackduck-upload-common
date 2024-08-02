@@ -136,11 +136,7 @@ public class FileUploader {
         try {
             String uploadUrl = startMultipartUpload(mutableResponseStatus, multipartUploadStartRequestHeaders, multipartUploadStartRequest);
             Map<Integer, String> uploadedParts = multipartUploadParts(mutableResponseStatus, multipartUploadFileMetadata, uploadUrl);
-            boolean allPartsUploaded = verifyAllPartsUploaded(multipartUploadFileMetadata, uploadedParts);
-            if(!allPartsUploaded) {
-                cancelUpload(uploadUrl);
-                throw new IntegrationException("The number of parts uploaded does not match the number of parts uploaded.");
-            }
+            verifyAllPartsUploaded(multipartUploadFileMetadata, uploadedParts);
             return finishMultipartUpload(mutableResponseStatus, uploadUrl, uploadStatusFunction);
         } catch (IntegrationException ex) {
             return uploadStatusErrorFunction.apply(mutableResponseStatus, ex);
@@ -232,6 +228,11 @@ public class FileUploader {
             logger.debug("Awaiting for executor service to complete or timeout of {} minutes occurs.", multipartUploadTimeoutInMinutes);
             boolean success = executorService.awaitTermination(multipartUploadTimeoutInMinutes, TimeUnit.MINUTES);
             logger.debug("Executor service terminated: {}", success);
+            // if the timeout occurred cancel the upload.
+            if(!success) {
+                logger.debug("Executor service timed out.");
+                cancelUpload(uploadUrl);
+            }
             if (isCanceled) {
                 logger.info("Upload was cancelled. Check log for errors.");
             } else if (success) {
@@ -418,7 +419,7 @@ public class FileUploader {
         return requestHeaders;
     }
 
-    private boolean verifyAllPartsUploaded(MultipartUploadFileMetadata multipartUploadFileMetaData, Map<Integer, String> uploadedParts) throws IntegrationException {
+    private void verifyAllPartsUploaded(MultipartUploadFileMetadata multipartUploadFileMetaData, Map<Integer, String> uploadedParts) throws IntegrationException {
         int actual = uploadedParts.size();
         int expected = multipartUploadFileMetaData.getFileChunks().size();
         if (expected != actual) {
@@ -428,8 +429,7 @@ public class FileUploader {
                 expected
             );
             logger.error(message);
-            return false;
+            throw new IntegrationException("The number of parts uploaded does not match the number of parts uploaded. Expected: " + expected + ", Actual: " + actual);
         }
-        return true;
     }
 }
