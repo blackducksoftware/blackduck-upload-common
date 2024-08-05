@@ -10,8 +10,8 @@ import java.util.stream.Collectors;
  * Enum to handle properties coming from environment.
  */
 public enum EnvironmentProperties {
-    BLACKDUCK_UPLOAD_CHUNK_SIZE("blackduck.upload.chunk.size", true),
-    BLACKDUCK_TIMEOUT_SECONDS("blackduck.timeout.seconds", true),
+    BLACKDUCK_UPLOAD_CHUNK_SIZE("blackduck.upload.chunk.size", false),
+    BLACKDUCK_TIMEOUT_SECONDS("blackduck.timeout.seconds", false),
     BLACKDUCK_TRUST_CERT("blackduck.trust.cert", true),
     BLACKDUCK_URL("blackduck.url", true),
     BLACKDUCK_API_TOKEN("blackduck.api.token", true),
