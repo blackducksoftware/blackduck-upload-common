@@ -292,7 +292,7 @@ public class UploaderConfig {
         /**
          * Retrieve current builder value for trusting the Black Duck server certificate.
          *
-         * @return configured or default timeout in seconds.
+         * @return configured value to trust server certificate.
          */
         public boolean isAlwaysTrustServerCertificate() {
             return Boolean.parseBoolean(getPropertyValue(EnvironmentProperties.BLACKDUCK_TRUST_CERT.getPropertyKey()));
