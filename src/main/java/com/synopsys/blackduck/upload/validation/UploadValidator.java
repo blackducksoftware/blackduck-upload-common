@@ -21,6 +21,8 @@ public class UploadValidator {
     public static final int MINIMUM_UPLOAD_CHUNK_SIZE = 1024 * 1024 * 5;
     // The maximum supported size of a file chunk that can be uploaded is 2 GB.
     public static final int MAXIMUM_UPLOAD_CHUNK_SIZE = 1024 * 1024 * (1024 - 1) * 2;
+    // The default chunk size, if no chunk size is provided, is 25 MB.
+    public static final int DEFAULT_UPLOAD_CHUNK_SIZE = 1024 * 1024 * 25;
     // The default minimum file size for initiating a multipart upload is 5 GB.
     public static final long DEFAULT_MULTIPART_UPLOAD_FILE_SIZE_THRESHOLD = 1024L * 1024L * 1024L * 5L;
     // The maximum supported total file size for blackduck-upload-common is 100 GB.

@@ -13,6 +13,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.synopsys.blackduck.upload.rest.BlackDuckHttpClient;
 import com.synopsys.blackduck.upload.validation.UploadValidator;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.rest.HttpUrl;
@@ -72,6 +73,43 @@ class UploaderConfigTest {
         UploaderConfig.Builder uploaderConfigBuilder = UploaderConfig.createConfig(PROXY_INFO);
         IntegrationException integrationException = assertThrows(IntegrationException.class, uploaderConfigBuilder::build);
         EnvironmentProperties.getRequiredPropertyKeys().forEach(key -> assertTrue(integrationException.getMessage().contains(key)));
+    }
+
+    @Test
+    void testOnlyRequiredValuesNull() {
+        // Blackduck URL, API Token, and trust cert are omitted from the builder
+        UploaderConfig.Builder uploaderConfigBuilder = UploaderConfig.createConfig(PROXY_INFO);
+        uploaderConfigBuilder
+            .setUploadChunkSize(UPLOAD_CHUNK_SIZE)
+            .setTimeoutInSeconds(TIMEOUT_IN_SECONDS)
+            .setMultipartUploadThreshold(MULTIPART_UPLOAD_THRESHOLD)
+            .setMultipartUploadPartRetryAttempts(UploadValidator.DEFAULT_MULTIPART_UPLOAD_PART_RETRY_ATTEMPTS)
+            .setMultipartUploadPartRetryInitialInterval(UploadValidator.DEFAULT_MULTIPART_UPLOAD_PART_RETRY_INITIAL_INTERVAL)
+            .setMultipartUploadTimeoutInMinutes(UploadValidator.DEFAULT_MULTIPART_UPLOAD_TIMEOUT_MINUTES);
+
+        IntegrationException integrationException = assertThrows(IntegrationException.class, uploaderConfigBuilder::build);
+        EnvironmentProperties.getRequiredPropertyKeys().forEach(key -> assertTrue(integrationException.getMessage().contains(key)));
+    }
+
+    @Test
+    void testNonRequiredValuesNull() {
+        UploaderConfig.Builder uploaderConfigBuilder = UploaderConfig.createConfig(PROXY_INFO);
+        uploaderConfigBuilder
+            .setAlwaysTrustServerCertificate(ALWAYS_TRUST_CERT)
+            .setBlackDuckUrl(httpUrl)
+            .setApiToken(API_TOKEN);
+
+        UploaderConfig uploaderConfig = assertDoesNotThrow(uploaderConfigBuilder::build);
+        assertEquals(PROXY_INFO, uploaderConfig.getProxyInfo());
+        assertEquals(ALWAYS_TRUST_CERT, uploaderConfig.isAlwaysTrustServerCertificate());
+        assertEquals(httpUrl, uploaderConfig.getBlackDuckUrl());
+        assertEquals(API_TOKEN, uploaderConfig.getApiToken());
+        assertEquals(UploadValidator.DEFAULT_UPLOAD_CHUNK_SIZE, uploaderConfig.getUploadChunkSize());
+        assertEquals(BlackDuckHttpClient.DEFAULT_BLACKDUCK_TIMEOUT_SECONDS, uploaderConfig.getTimeoutInSeconds());
+        assertEquals(UploadValidator.DEFAULT_MULTIPART_UPLOAD_FILE_SIZE_THRESHOLD, uploaderConfig.getMultipartUploadThreshold());
+        assertEquals(UploadValidator.DEFAULT_MULTIPART_UPLOAD_PART_RETRY_ATTEMPTS, uploaderConfig.getMultipartUploadPartRetryAttempts());
+        assertEquals(UploadValidator.DEFAULT_MULTIPART_UPLOAD_PART_RETRY_INITIAL_INTERVAL, uploaderConfig.getMultipartUploadPartRetryInitialInterval());
+        assertEquals(UploadValidator.DEFAULT_MULTIPART_UPLOAD_TIMEOUT_MINUTES, uploaderConfig.getMultipartUploadTimeoutInMinutes());
     }
 
     @Test

@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.collections.CollectionUtils;
 
+import com.synopsys.blackduck.upload.rest.BlackDuckHttpClient;
 import com.synopsys.blackduck.upload.validation.ErrorCode;
 import com.synopsys.blackduck.upload.validation.UploadError;
 import com.synopsys.blackduck.upload.validation.UploadValidator;
@@ -241,13 +242,14 @@ public class UploaderConfig {
         public UploaderConfig build() throws IntegrationException {
             validate();
 
+            // Black Duck URL and API token are validated prior to construction, therefore those values should never be null.
             return new UploaderConfig(
                 proxyInfo,
                 getUploadChunkSize(),
                 getTimeoutInSeconds(),
                 isAlwaysTrustServerCertificate(),
-                getBlackDuckUrl(),
-                getApiToken(),
+                getBlackDuckUrl().orElse(null),
+                getApiToken().orElse(null),
                 getMultipartUploadThreshold(),
                 getMultipartUploadPartRetryAttempts(),
                 getMultipartUploadPartRetryInitialInterval(),
@@ -267,47 +269,99 @@ public class UploaderConfig {
             }
         }
 
-        private int getUploadChunkSize() {
-            return Integer.parseInt(getPropertyValue(EnvironmentProperties.BLACKDUCK_UPLOAD_CHUNK_SIZE.getPropertyKey()));
+
+        /**
+         * Retrieve current builder value for the size of uploading chunks to Black Duck.
+         *
+         * @return configured or default upload chunk size.
+         */
+        public int getUploadChunkSize() {
+            Optional<String> uploadChunkSizeProperty = Optional.ofNullable(getPropertyValue(EnvironmentProperties.BLACKDUCK_UPLOAD_CHUNK_SIZE.getPropertyKey()));
+            return uploadChunkSizeProperty.map(Integer::parseInt).orElse(UploadValidator.DEFAULT_UPLOAD_CHUNK_SIZE);
         }
 
-        private int getTimeoutInSeconds() {
-            return Integer.parseInt(getPropertyValue(EnvironmentProperties.BLACKDUCK_TIMEOUT_SECONDS.getPropertyKey()));
+        /**
+         * Retrieve current builder value for the timeout when communicating with Black Duck.
+         *
+         * @return configured or default timeout in seconds.
+         */
+        public int getTimeoutInSeconds() {
+            Optional<String> timeoutInSeconds = Optional.ofNullable(getPropertyValue(EnvironmentProperties.BLACKDUCK_TIMEOUT_SECONDS.getPropertyKey()));
+            return timeoutInSeconds.map(Integer::parseInt).orElse(BlackDuckHttpClient.DEFAULT_BLACKDUCK_TIMEOUT_SECONDS);
         }
 
-        private boolean isAlwaysTrustServerCertificate() {
+        /**
+         * Retrieve current builder value for trusting the Black Duck server certificate.
+         *
+         * @return configured value to trust server certificate.
+         */
+        public boolean isAlwaysTrustServerCertificate() {
             return Boolean.parseBoolean(getPropertyValue(EnvironmentProperties.BLACKDUCK_TRUST_CERT.getPropertyKey()));
         }
 
-        private HttpUrl getBlackDuckUrl() throws IntegrationException {
-            return new HttpUrl(getPropertyValue(EnvironmentProperties.BLACKDUCK_URL.getPropertyKey()));
+        /**
+         * Retrieve current builder value for the Black Duck {@link HttpUrl}.
+         *
+         * @return {@link Optional} configured Black Duck {@link HttpUrl}.
+         */
+        public Optional<HttpUrl> getBlackDuckUrl() throws IntegrationException {
+            Optional<String> blackduckUrlProperty = Optional.ofNullable(getPropertyValue(EnvironmentProperties.BLACKDUCK_URL.getPropertyKey()));
+            if (blackduckUrlProperty.isPresent()) {
+                return Optional.of(new HttpUrl(blackduckUrlProperty.get()));
+            }
+            return Optional.empty();
         }
 
-        private String getApiToken() {
-            return getPropertyValue(EnvironmentProperties.BLACKDUCK_API_TOKEN.getPropertyKey());
+        /**
+         * Retrieve current builder value for the Black Duck API token.
+         *
+         * @return {@link Optional} configured api token.
+         */
+        public Optional<String> getApiToken() {
+            return Optional.ofNullable(getPropertyValue(EnvironmentProperties.BLACKDUCK_API_TOKEN.getPropertyKey()));
         }
 
-        private Long getMultipartUploadThreshold() {
+        /**
+         * Retrieve current builder value for the multipart upload threshold.
+         *
+         * @return configured or default multipart upload threshold.
+         */
+        public Long getMultipartUploadThreshold() {
             Optional<String> multipartUploadThresholdProperty = Optional.ofNullable(getPropertyValue(EnvironmentProperties.BLACKDUCK_MULTIPART_UPLOAD_THRESHOLD.getPropertyKey()));
             return multipartUploadThresholdProperty.map(Long::parseLong)
                 .orElse(UploadValidator.DEFAULT_MULTIPART_UPLOAD_FILE_SIZE_THRESHOLD);
         }
 
-        private Integer getMultipartUploadPartRetryAttempts() {
+        /**
+         * Retrieve current builder value for the multipart retry attempts.
+         *
+         * @return configured or default multipart retry attempts.
+         */
+        public Integer getMultipartUploadPartRetryAttempts() {
             Optional<String> multipartUploadPartRetryAttemptsProperty =
                 Optional.ofNullable(getPropertyValue(EnvironmentProperties.BLACKDUCK_MULTIPART_UPLOAD_PART_RETRY_ATTEMPTS.getPropertyKey()));
             return multipartUploadPartRetryAttemptsProperty.map(Integer::parseInt)
                 .orElse(UploadValidator.DEFAULT_MULTIPART_UPLOAD_PART_RETRY_ATTEMPTS);
         }
 
-        private Long getMultipartUploadPartRetryInitialInterval() {
+        /**
+         * Retrieve current builder value for the multipart retry initial interval.
+         *
+         * @return configured or default multipart retry initial interval.
+         */
+        public Long getMultipartUploadPartRetryInitialInterval() {
             Optional<String> multipartUploadPartRetryInitialIntervalProperty =
                 Optional.ofNullable(getPropertyValue(EnvironmentProperties.BLACKDUCK_MULTIPART_UPLOAD_PART_RETRY_INITIAL_INTERVAL.getPropertyKey()));
             return multipartUploadPartRetryInitialIntervalProperty.map(Long::parseLong)
                 .orElse(UploadValidator.DEFAULT_MULTIPART_UPLOAD_PART_RETRY_INITIAL_INTERVAL);
         }
 
-        private Integer getMultipartUploadTimeoutInMinutes() {
+        /**
+         * Retrieve current builder value for the multipart upload timeout in minutes.
+         *
+         * @return configured or default multipart upload timeout in minutes.
+         */
+        public Integer getMultipartUploadTimeoutInMinutes() {
             Optional<String> multipartUploadTimeoutMinutesProperty =
                 Optional.ofNullable(getPropertyValue(EnvironmentProperties.BLACKDUCK_MULTIPART_UPLOAD_TIMEOUT_MINUTES.getPropertyKey()));
             return multipartUploadTimeoutMinutesProperty.map(Integer::parseInt)

@@ -26,6 +26,8 @@ import com.synopsys.integration.rest.support.AuthenticationSupport;
  * The class to execute Black Duck REST API requests to a Black Duck server.
  */
 public class BlackDuckHttpClient extends AuthenticatingIntHttpClient {
+    public static int DEFAULT_BLACKDUCK_TIMEOUT_SECONDS = 300;
+
     private static final String AUTHORIZATION_TYPE = "Bearer";
     public static final String AUTHENTICATION_SUFFIX = "api/tokens/authenticate";
     public static final String BEARER_RESPONSE_KEY = "bearerToken";
