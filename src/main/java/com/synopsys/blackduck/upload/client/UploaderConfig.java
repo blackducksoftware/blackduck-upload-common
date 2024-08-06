@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.collections.CollectionUtils;
 
+import com.synopsys.blackduck.upload.rest.BlackDuckHttpClient;
 import com.synopsys.blackduck.upload.validation.ErrorCode;
 import com.synopsys.blackduck.upload.validation.UploadError;
 import com.synopsys.blackduck.upload.validation.UploadValidator;
@@ -286,7 +287,7 @@ public class UploaderConfig {
          */
         public int getTimeoutInSeconds() {
             Optional<String> timeoutInSeconds = Optional.ofNullable(getPropertyValue(EnvironmentProperties.BLACKDUCK_TIMEOUT_SECONDS.getPropertyKey()));
-            return timeoutInSeconds.map(Integer::parseInt).orElse(300);
+            return timeoutInSeconds.map(Integer::parseInt).orElse(BlackDuckHttpClient.DEFAULT_BLACKDUCK_TIMEOUT_SECONDS);
         }
 
         /**
