@@ -7,17 +7,21 @@ import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 import org.apache.http.HttpHeaders;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.FileEntity;
 
 import com.synopsys.blackduck.upload.file.FileUploader;
 import com.synopsys.blackduck.upload.file.model.MultipartUploadFileMetadata;
 import com.synopsys.blackduck.upload.rest.model.ContentTypes;
 import com.synopsys.blackduck.upload.rest.model.request.MultipartUploadStartRequest;
+import com.synopsys.blackduck.upload.rest.status.ContainerUploadStatus;
 import com.synopsys.blackduck.upload.rest.status.MutableResponseStatus;
 import com.synopsys.blackduck.upload.rest.status.UploadStatus;
 import com.synopsys.blackduck.upload.validation.UploadValidator;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.function.ThrowingFunction;
 import com.synopsys.integration.rest.body.BodyContent;
+import com.synopsys.integration.rest.body.EntityBodyContent;
 import com.synopsys.integration.rest.response.Response;
 
 /**
@@ -27,7 +31,7 @@ import com.synopsys.integration.rest.response.Response;
  * @see FileUploader
  * @see UploadValidator
  */
-public class ContainerUploader extends AbstractUploader<UploadStatus> {
+public class ContainerUploader extends AbstractUploader<ContainerUploadStatus> {
 
     /**
      * Constructor for Container uploads.
@@ -48,9 +52,10 @@ public class ContainerUploader extends AbstractUploader<UploadStatus> {
      */
     @Override
     protected BodyContent createBodyContent(Path filePath) {
-        throw new UnsupportedOperationException("Default upload for data type not implemented");
-        // TODO: Implement for tools upload. custom octet stream content type similar to binary
+        FileEntity entity = new FileEntity(filePath.toFile(), ContentType.create(ContentTypes.APPLICATION_CONTAINER_SCAN_DATA_V1));
+        return new EntityBodyContent(entity);
     }
+
 
     /**
      * Retrieve the HTTP request headers used for starting Container multipart upload requests.
@@ -86,9 +91,12 @@ public class ContainerUploader extends AbstractUploader<UploadStatus> {
      * @return a function that produces the {@link UploadStatus} or throws an exception.
      */
     @Override
-    protected ThrowingFunction<Response, UploadStatus, IntegrationException> createUploadStatus() {
-        //TODO: to be implemented in phase 2
-        throw new UnsupportedOperationException("This function is not yet supported for this uploader type");
+    protected ThrowingFunction<Response, ContainerUploadStatus, IntegrationException> createUploadStatus() {
+        return response -> {
+            int statusCode = response.getStatusCode();
+            String statusMessage = response.getStatusMessage();
+            return new ContainerUploadStatus(statusCode, statusMessage, null);
+        };
     }
 
     /**
@@ -98,8 +106,7 @@ public class ContainerUploader extends AbstractUploader<UploadStatus> {
      * @return a function that produces the {@link UploadStatus} when an error has occurred.
      */
     @Override
-    protected BiFunction<MutableResponseStatus, IntegrationException, UploadStatus> createUploadStatusError() {
-        //TODO: to be implemented in phase 2
-        throw new UnsupportedOperationException("This function is not yet supported for this uploader type");
+    protected BiFunction<MutableResponseStatus, IntegrationException, ContainerUploadStatus> createUploadStatusError() {
+        return (response, exception) -> new ContainerUploadStatus(response.getStatusCode(), response.getStatusMessage(), exception);
     }
 }
