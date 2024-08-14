@@ -119,6 +119,7 @@ public class FileUploader {
      *
      * @param multipartUploadFileMetadata The {@link MultipartUploadFileMetadata} for the file to upload.
      * @param multipartUploadStartRequestHeaders A {@link Map} of headers for the multipart upload start request.
+     * @param multipartUploadStartContentType The Content-Type for the start request body.
      * @param multipartUploadStartRequest The data object for multipart upload start request.
      * @param uploadStatusFunction {@link ThrowingFunction} that generates the {@link UploadStatus} from the response.
      * @param uploadStatusErrorFunction {@link BiFunction} that generates the error {@link UploadStatus} from the response and exception thrown.
@@ -128,13 +129,14 @@ public class FileUploader {
     public <T extends UploadStatus> T multipartUpload(
         MultipartUploadFileMetadata multipartUploadFileMetadata,
         Map<String, String> multipartUploadStartRequestHeaders,
+        String multipartUploadStartContentType,
         MultipartUploadStartRequest multipartUploadStartRequest,
         ThrowingFunction<Response, T, IntegrationException> uploadStatusFunction,
         BiFunction<MutableResponseStatus, IntegrationException, T> uploadStatusErrorFunction
     ) {
         MutableResponseStatus mutableResponseStatus = new MutableResponseStatus(-1, "unknown status");
         try {
-            String uploadUrl = startMultipartUpload(mutableResponseStatus, multipartUploadStartRequestHeaders, multipartUploadStartRequest);
+            String uploadUrl = startMultipartUpload(mutableResponseStatus, multipartUploadStartRequestHeaders, multipartUploadStartContentType, multipartUploadStartRequest);
             Map<Integer, String> uploadedParts = multipartUploadParts(mutableResponseStatus, multipartUploadFileMetadata, uploadUrl);
             verifyAllPartsUploaded(multipartUploadFileMetadata, uploadedParts);
             return finishMultipartUpload(mutableResponseStatus, uploadUrl, uploadStatusFunction);
@@ -148,6 +150,7 @@ public class FileUploader {
      *
      * @param mutableResponseStatus A {@link MutableResponseStatus} with the status of the multipart upload.
      * @param startRequestHeaders A {@link Map} of headers for the multipart upload start request.
+     * @param multipartUploadStartContentType The Content-Type for the start request body.
      * @param multipartUploadStartRequest The data object for multipart upload start request.
      * @return Value of the upload url from Black Duck to be used for part uploads and assembly.
      * @throws IntegrationException if an error occurred while making the request to Black Duck.
@@ -155,6 +158,7 @@ public class FileUploader {
     protected String startMultipartUpload(
         MutableResponseStatus mutableResponseStatus,
         Map<String, String> startRequestHeaders,
+        String multipartUploadStartContentType,
         MultipartUploadStartRequest multipartUploadStartRequest
     ) throws IntegrationException {
         String requestPath = uploadRequestPaths.getMultipartUploadStartRequestPath();
@@ -166,7 +170,7 @@ public class FileUploader {
             .headers(startRequestHeaders)
             .bodyContent(new StringBodyContent(
                 gson.toJson(multipartUploadStartRequest),
-                ContentType.create(ContentTypes.APPLICATION_BINARY_MULTIPART_UPLOAD_START_V1)
+                ContentType.create(multipartUploadStartContentType)
             ));
 
         Request request = builder.build();

@@ -161,6 +161,7 @@ class FileUploaderTestIT {
         BinaryUploadStatus uploadStatus = fileUploader.multipartUpload(
             metaData,
             startRequestHeaders,
+            ContentTypes.APPLICATION_BINARY_MULTIPART_UPLOAD_START_V1,
             uploadStartRequest,
             createBinaryUploadStatusFunction(),
             createUploadStatusErrorFunction()
@@ -199,6 +200,7 @@ class FileUploaderTestIT {
         BinaryUploadStatus uploadStatus = fileUploader.multipartUpload(
             metaData,
             startRequestHeaders,
+            ContentTypes.APPLICATION_BINARY_MULTIPART_UPLOAD_START_V1,
             uploadStartRequest,
             createBinaryUploadStatusFunction(),
             createUploadStatusErrorFunction()
@@ -223,6 +225,7 @@ class FileUploaderTestIT {
         String startUploadUrl = fileUploader.startMultipartUpload(
             mutableResponseStatus,
             Map.of(HttpHeaders.CONTENT_TYPE, ContentTypes.APPLICATION_BINARY_MULTIPART_UPLOAD_START_V1),
+            ContentTypes.APPLICATION_BINARY_MULTIPART_UPLOAD_START_V1,
             uploadStartRequest
         );
         assertDoesNotThrow(() -> new URL(startUploadUrl).toURI());
@@ -239,6 +242,7 @@ class FileUploaderTestIT {
         String startUploadUrl = fileUploader.startMultipartUpload(
             mutableResponseStatus,
             Map.of(HttpHeaders.CONTENT_TYPE, ContentTypes.APPLICATION_BINARY_MULTIPART_UPLOAD_START_V1),
+            ContentTypes.APPLICATION_BINARY_MULTIPART_UPLOAD_START_V1,
             uploadStartRequest
         );
         Map<Integer, String> partsMap = fileUploader.multipartUploadParts(mutableResponseStatus, metaData, startUploadUrl);
@@ -279,6 +283,7 @@ class FileUploaderTestIT {
         String startUploadUrl = fileUploader.startMultipartUpload(
             mutableResponseStatus,
             Map.of(HttpHeaders.CONTENT_TYPE, ContentTypes.APPLICATION_BINARY_MULTIPART_UPLOAD_START_V1),
+            ContentTypes.APPLICATION_BINARY_MULTIPART_UPLOAD_START_V1,
             uploadStartRequest
         );
         Map<Integer, String> partsMap = fileUploader.multipartUploadParts(mutableResponseStatus, metaData, startUploadUrl);
@@ -318,6 +323,7 @@ class FileUploaderTestIT {
         String startUploadUrl = multipartFileUploader.startMultipartUpload(
             mutableResponseStatus,
             Map.of(HttpHeaders.CONTENT_TYPE, ContentTypes.APPLICATION_BINARY_MULTIPART_UPLOAD_START_V1),
+            ContentTypes.APPLICATION_BINARY_MULTIPART_UPLOAD_START_V1,
             uploadStartRequest
         );
         Map<Integer, String> partsMap = multipartFileUploader.multipartUploadParts(mutableResponseStatus, invalidMetadata, startUploadUrl);
@@ -336,6 +342,7 @@ class FileUploaderTestIT {
         String startUploadUrl = fileUploader.startMultipartUpload(
             mutableResponseStatus,
             Map.of(HttpHeaders.CONTENT_TYPE, ContentTypes.APPLICATION_BINARY_MULTIPART_UPLOAD_START_V1),
+            ContentTypes.APPLICATION_BINARY_MULTIPART_UPLOAD_START_V1,
             uploadStartRequest
         );
         Map<Integer, String> partsMap = fileUploader.multipartUploadParts(mutableResponseStatus, metaData, startUploadUrl);
@@ -374,6 +381,7 @@ class FileUploaderTestIT {
         String startUploadUrl = fileUploader.startMultipartUpload(
             mutableResponseStatus,
             Map.of(HttpHeaders.CONTENT_TYPE, ContentTypes.APPLICATION_BINARY_MULTIPART_UPLOAD_START_V1),
+            ContentTypes.APPLICATION_BINARY_MULTIPART_UPLOAD_START_V1,
             uploadStartRequest
         );
         Map<Integer, String> partsMap = fileUploader.multipartUploadParts(mutableResponseStatus, invalidMetadata, startUploadUrl);

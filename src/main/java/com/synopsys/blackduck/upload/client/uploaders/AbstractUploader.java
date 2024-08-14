@@ -78,6 +78,7 @@ public abstract class AbstractUploader<T extends UploadStatus> {
         return fileUploader.multipartUpload(
             multipartUploadFileMetadata,
             getMultipartUploadStartRequestHeaders(),
+            getMultipartUploadStartContentType(),
             getMultipartUploadStartRequest(() -> multipartUploadFileMetadata),
             createUploadStatus(),
             createUploadStatusError()
@@ -98,6 +99,13 @@ public abstract class AbstractUploader<T extends UploadStatus> {
      * @return a map of HTTP request headers.
      */
     protected abstract Map<String, String> getMultipartUploadStartRequestHeaders();
+
+    /**
+     * Retrieve the Content-Type for the multipart upload start request.
+     *
+     * @return the uploader Content-Type for upload start requests.
+     */
+    protected abstract String getMultipartUploadStartContentType();
 
     /**
      * Retrieve the body content for an HTTP multipart upload start request.

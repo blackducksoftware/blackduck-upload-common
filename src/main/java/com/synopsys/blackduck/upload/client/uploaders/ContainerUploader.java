@@ -65,8 +65,18 @@ public class ContainerUploader extends AbstractUploader<ContainerUploadStatus> {
     @Override
     protected Map<String, String> getMultipartUploadStartRequestHeaders() {
         Map<String, String> headers = new HashMap<>();
-        headers.put(HttpHeaders.CONTENT_TYPE, ContentTypes.APPLICATION_MULTIPART_UPLOAD_START_V1);
+        headers.put(HttpHeaders.CONTENT_TYPE, getMultipartUploadStartContentType());
         return headers;
+    }
+
+    /**
+     * Retrieve the Content-Type for the multipart container upload start requests.
+     *
+     * @return the Content-Type for container upload start requests.
+     */
+    @Override
+    protected String getMultipartUploadStartContentType() {
+        return ContentTypes.APPLICATION_MULTIPART_UPLOAD_START_V1;
     }
 
     /**
