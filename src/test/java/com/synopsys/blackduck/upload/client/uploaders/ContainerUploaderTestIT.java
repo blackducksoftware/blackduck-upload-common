@@ -3,6 +3,7 @@ package com.synopsys.blackduck.upload.client.uploaders;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.IOException;
@@ -23,6 +24,7 @@ import com.synopsys.blackduck.upload.client.UploaderConfig;
 import com.synopsys.blackduck.upload.generator.RandomByteContentFileGenerator;
 import com.synopsys.blackduck.upload.rest.status.ContainerUploadStatus;
 import com.synopsys.blackduck.upload.test.TestPropertyKey;
+import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.properties.TestPropertiesManager;
@@ -39,6 +41,8 @@ class ContainerUploaderTestIT {
 
     private UploaderFactory uploaderFactory;
     private Path generatedSampleFilePath;
+
+    private UploaderConfig.Builder uploaderConfigBuilder;
 
     @BeforeAll
     void createSampleFile() throws IOException {
@@ -62,18 +66,20 @@ class ContainerUploaderTestIT {
             -> testPropertiesManager.getRequiredProperty(TestPropertyKey.TEST_BLACKDUCK_API_TOKEN.getPropertyKey()));
 
 
-        UploaderConfig.Builder uploaderConfigBuilder = UploaderConfig.createConfigFromProperties(ProxyInfo.NO_PROXY_INFO, new Properties());
+        //Set default values for tests
+        uploaderConfigBuilder = UploaderConfig.createConfigFromProperties(ProxyInfo.NO_PROXY_INFO, new Properties());
         uploaderConfigBuilder
             .setUploadChunkSize(100)
             .setAlwaysTrustServerCertificate(true)
             .setBlackDuckUrl(blackduckUrl)
             .setApiToken(blackduckApiToken);
-        UploaderConfig uploaderConfig = assertDoesNotThrow(uploaderConfigBuilder::build);
-        uploaderFactory = new UploaderFactory(uploaderConfig, intLogger, gson);
     }
 
     @Test
     void testStandardUpload() {
+        UploaderConfig uploaderConfig = assertDoesNotThrow(uploaderConfigBuilder::build);
+        uploaderFactory = new UploaderFactory(uploaderConfig, intLogger, gson);
+
         ContainerUploader containerUploader = uploaderFactory.createContainerUploader(String.format("/api/storage/containers/%s", UUID.randomUUID()));
         ContainerUploadStatus uploadStatus = assertDoesNotThrow(() -> containerUploader.upload(generatedSampleFilePath));
         assertFalse(uploadStatus.isError());
@@ -82,4 +88,31 @@ class ContainerUploaderTestIT {
         assertFalse(uploadStatus.hasContent());
     }
 
+    @Test
+    void testMultipartUpload() {
+        // set threshold to 1 byte to always perform a multipart upload
+        uploaderConfigBuilder
+            .setUploadChunkSize(1024 * 1024 * 5)
+            .setMultipartUploadThreshold(1L);
+        UploaderConfig uploaderConfig = assertDoesNotThrow(uploaderConfigBuilder::build);
+        uploaderFactory = new UploaderFactory(uploaderConfig, intLogger, gson);
+
+        ContainerUploader containerUploader = uploaderFactory.createContainerUploader(String.format("/api/storage/containers/%s", UUID.randomUUID()));
+        ContainerUploadStatus uploadStatus = assertDoesNotThrow(() -> containerUploader.upload(generatedSampleFilePath));
+        assertFalse(uploadStatus.isError());
+        assertEquals(HttpStatus.SC_NO_CONTENT, uploadStatus.getStatusCode());
+        assertFalse(uploadStatus.hasContent());
+    }
+
+    @Test
+    void testMultipartUploadValidationError() {
+        // Chunk size is 100 bytes, which is lower than the minimum supported
+        uploaderConfigBuilder
+            .setMultipartUploadThreshold(1L);
+        UploaderConfig uploaderConfig = assertDoesNotThrow(uploaderConfigBuilder::build);
+        uploaderFactory = new UploaderFactory(uploaderConfig, intLogger, gson);
+
+        ContainerUploader containerUploader = uploaderFactory.createContainerUploader(String.format("/api/storage/containers/%s", UUID.randomUUID()));
+        assertThrows(IntegrationException.class, () -> containerUploader.upload(generatedSampleFilePath));
+    }
 }
