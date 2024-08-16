@@ -14,7 +14,7 @@ import com.synopsys.blackduck.upload.file.FileUploader;
 import com.synopsys.blackduck.upload.file.model.MultipartUploadFileMetadata;
 import com.synopsys.blackduck.upload.rest.model.ContentTypes;
 import com.synopsys.blackduck.upload.rest.model.request.MultipartUploadStartRequest;
-import com.synopsys.blackduck.upload.rest.status.ContainerUploadStatus;
+import com.synopsys.blackduck.upload.rest.status.DefaultUploadStatus;
 import com.synopsys.blackduck.upload.rest.status.MutableResponseStatus;
 import com.synopsys.blackduck.upload.rest.status.UploadStatus;
 import com.synopsys.blackduck.upload.validation.UploadValidator;
@@ -31,7 +31,7 @@ import com.synopsys.integration.rest.response.Response;
  * @see FileUploader
  * @see UploadValidator
  */
-public class ContainerUploader extends AbstractUploader<ContainerUploadStatus> {
+public class ContainerUploader extends AbstractUploader<DefaultUploadStatus> {
 
     /**
      * Constructor for Container uploads.
@@ -101,11 +101,11 @@ public class ContainerUploader extends AbstractUploader<ContainerUploadStatus> {
      * @return a function that produces the {@link UploadStatus} or throws an exception.
      */
     @Override
-    protected ThrowingFunction<Response, ContainerUploadStatus, IntegrationException> createUploadStatus() {
+    protected ThrowingFunction<Response, DefaultUploadStatus, IntegrationException> createUploadStatus() {
         return response -> {
             int statusCode = response.getStatusCode();
             String statusMessage = response.getStatusMessage();
-            return new ContainerUploadStatus(statusCode, statusMessage, null);
+            return new DefaultUploadStatus(statusCode, statusMessage, null);
         };
     }
 
@@ -116,7 +116,7 @@ public class ContainerUploader extends AbstractUploader<ContainerUploadStatus> {
      * @return a function that produces the {@link UploadStatus} when an error has occurred.
      */
     @Override
-    protected BiFunction<MutableResponseStatus, IntegrationException, ContainerUploadStatus> createUploadStatusError() {
-        return (response, exception) -> new ContainerUploadStatus(response.getStatusCode(), response.getStatusMessage(), exception);
+    protected BiFunction<MutableResponseStatus, IntegrationException, DefaultUploadStatus> createUploadStatusError() {
+        return (response, exception) -> new DefaultUploadStatus(response.getStatusCode(), response.getStatusMessage(), exception);
     }
 }

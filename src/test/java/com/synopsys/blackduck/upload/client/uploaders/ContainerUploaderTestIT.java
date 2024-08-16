@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import com.google.gson.Gson;
 import com.synopsys.blackduck.upload.client.UploaderConfig;
 import com.synopsys.blackduck.upload.generator.RandomByteContentFileGenerator;
-import com.synopsys.blackduck.upload.rest.status.ContainerUploadStatus;
+import com.synopsys.blackduck.upload.rest.status.DefaultUploadStatus;
 import com.synopsys.blackduck.upload.test.TestPropertyKey;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.IntLogger;
@@ -81,7 +81,7 @@ class ContainerUploaderTestIT {
         uploaderFactory = new UploaderFactory(uploaderConfig, intLogger, gson);
 
         ContainerUploader containerUploader = uploaderFactory.createContainerUploader(String.format("/api/storage/containers/%s", UUID.randomUUID()));
-        ContainerUploadStatus uploadStatus = assertDoesNotThrow(() -> containerUploader.upload(generatedSampleFilePath));
+        DefaultUploadStatus uploadStatus = assertDoesNotThrow(() -> containerUploader.upload(generatedSampleFilePath));
         assertFalse(uploadStatus.isError());
         assertEquals(HttpStatus.SC_CREATED, uploadStatus.getStatusCode());
         // A container upload does not contain a response body, therefore there should be no content returned other than a 201 response code.
@@ -98,7 +98,7 @@ class ContainerUploaderTestIT {
         uploaderFactory = new UploaderFactory(uploaderConfig, intLogger, gson);
 
         ContainerUploader containerUploader = uploaderFactory.createContainerUploader(String.format("/api/storage/containers/%s", UUID.randomUUID()));
-        ContainerUploadStatus uploadStatus = assertDoesNotThrow(() -> containerUploader.upload(generatedSampleFilePath));
+        DefaultUploadStatus uploadStatus = assertDoesNotThrow(() -> containerUploader.upload(generatedSampleFilePath));
         assertFalse(uploadStatus.isError());
         assertEquals(HttpStatus.SC_NO_CONTENT, uploadStatus.getStatusCode());
         assertFalse(uploadStatus.hasContent());
