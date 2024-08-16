@@ -83,7 +83,7 @@ public class UploaderFactory {
         return new BlackDuckHttpClient(
             intLogger,
             gson,
-            uploaderConfig.getTimeoutInSeconds(),
+            uploaderConfig.getBlackDuckTimeoutInSeconds(),
             uploaderConfig.isAlwaysTrustServerCertificate(),
             uploaderConfig.getProxyInfo(),
             uploaderConfig.getBlackDuckUrl(),

@@ -29,7 +29,7 @@ public class UploaderFactoryTest {
         UploaderConfig.Builder uploaderConfigBuilder = UploaderConfig.createConfigFromProperties(ProxyInfo.NO_PROXY_INFO, new Properties());
         uploaderConfigBuilder
             .setUploadChunkSize(39)
-            .setTimeoutInSeconds(13)
+            .setBlackDuckTimeoutInSeconds(13)
             .setAlwaysTrustServerCertificate(false)
             .setBlackDuckUrl("https://somewhere.com")
             .setApiToken("ThisTsNotAValidToken");

@@ -22,7 +22,7 @@ import com.synopsys.integration.rest.proxy.ProxyInfo;
 class UploaderConfigTest {
     private static final ProxyInfo PROXY_INFO = ProxyInfo.NO_PROXY_INFO;
     private static final int UPLOAD_CHUNK_SIZE = 31339;
-    private static final int TIMEOUT_IN_SECONDS = 30;
+    private static final int BLACKDUCK_TIMEOUT_IN_SECONDS = 30;
     private static final boolean ALWAYS_TRUST_CERT = false;
     private static final String HTTP_URL_STRING = "https://somewhere.com";
     private static final String API_TOKEN = "ThisTsNotAValidToken";
@@ -46,7 +46,7 @@ class UploaderConfigTest {
         UploaderConfig.Builder uploaderConfigBuilder = UploaderConfig.createConfigFromProperties(PROXY_INFO, new Properties());
         uploaderConfigBuilder
             .setUploadChunkSize(UPLOAD_CHUNK_SIZE)
-            .setTimeoutInSeconds(TIMEOUT_IN_SECONDS)
+            .setBlackDuckTimeoutInSeconds(BLACKDUCK_TIMEOUT_IN_SECONDS)
             .setAlwaysTrustServerCertificate(ALWAYS_TRUST_CERT)
             .setBlackDuckUrl(httpUrl)
             .setApiToken(API_TOKEN)
@@ -58,7 +58,7 @@ class UploaderConfigTest {
         UploaderConfig uploaderConfig = assertDoesNotThrow(uploaderConfigBuilder::build);
         assertEquals(PROXY_INFO, uploaderConfig.getProxyInfo());
         assertEquals(UPLOAD_CHUNK_SIZE, uploaderConfig.getUploadChunkSize());
-        assertEquals(TIMEOUT_IN_SECONDS, uploaderConfig.getTimeoutInSeconds());
+        assertEquals(BLACKDUCK_TIMEOUT_IN_SECONDS, uploaderConfig.getBlackDuckTimeoutInSeconds());
         assertEquals(ALWAYS_TRUST_CERT, uploaderConfig.isAlwaysTrustServerCertificate());
         assertEquals(httpUrl, uploaderConfig.getBlackDuckUrl());
         assertEquals(API_TOKEN, uploaderConfig.getApiToken());
@@ -81,7 +81,7 @@ class UploaderConfigTest {
         UploaderConfig.Builder uploaderConfigBuilder = UploaderConfig.createConfig(PROXY_INFO);
         uploaderConfigBuilder
             .setUploadChunkSize(UPLOAD_CHUNK_SIZE)
-            .setTimeoutInSeconds(TIMEOUT_IN_SECONDS)
+            .setBlackDuckTimeoutInSeconds(BLACKDUCK_TIMEOUT_IN_SECONDS)
             .setMultipartUploadThreshold(MULTIPART_UPLOAD_THRESHOLD)
             .setMultipartUploadPartRetryAttempts(UploadValidator.DEFAULT_MULTIPART_UPLOAD_PART_RETRY_ATTEMPTS)
             .setMultipartUploadPartRetryInitialInterval(UploadValidator.DEFAULT_MULTIPART_UPLOAD_PART_RETRY_INITIAL_INTERVAL)
@@ -105,7 +105,7 @@ class UploaderConfigTest {
         assertEquals(httpUrl, uploaderConfig.getBlackDuckUrl());
         assertEquals(API_TOKEN, uploaderConfig.getApiToken());
         assertEquals(UploadValidator.DEFAULT_UPLOAD_CHUNK_SIZE, uploaderConfig.getUploadChunkSize());
-        assertEquals(BlackDuckHttpClient.DEFAULT_BLACKDUCK_TIMEOUT_SECONDS, uploaderConfig.getTimeoutInSeconds());
+        assertEquals(BlackDuckHttpClient.DEFAULT_BLACKDUCK_TIMEOUT_SECONDS, uploaderConfig.getBlackDuckTimeoutInSeconds());
         assertEquals(UploadValidator.DEFAULT_MULTIPART_UPLOAD_FILE_SIZE_THRESHOLD, uploaderConfig.getMultipartUploadThreshold());
         assertEquals(UploadValidator.DEFAULT_MULTIPART_UPLOAD_PART_RETRY_ATTEMPTS, uploaderConfig.getMultipartUploadPartRetryAttempts());
         assertEquals(UploadValidator.DEFAULT_MULTIPART_UPLOAD_PART_RETRY_INITIAL_INTERVAL, uploaderConfig.getMultipartUploadPartRetryInitialInterval());
@@ -123,7 +123,7 @@ class UploaderConfigTest {
     @Test
     void testBuildValidationTimeout() {
         UploaderConfig.Builder uploaderConfigBuilder = assertDoesNotThrow(() -> UploaderConfig.createConfigFromFile(PROXY_INFO, testPropertiesFile));
-        uploaderConfigBuilder.setTimeoutInSeconds(TIMEOUT_IN_SECONDS);
+        uploaderConfigBuilder.setBlackDuckTimeoutInSeconds(BLACKDUCK_TIMEOUT_IN_SECONDS);
         IntegrationException integrationException = assertThrows(IntegrationException.class, uploaderConfigBuilder::build);
         assertFalse(integrationException.getMessage().contains(EnvironmentProperties.BLACKDUCK_TIMEOUT_SECONDS.getPropertyKey()));
     }
