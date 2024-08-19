@@ -16,6 +16,11 @@ public class ContentTypes {
      */
     public static final String APPLICATION_BINARY_MULTIPART_UPLOAD_START_V1 = "application/vnd.blackducksoftware.binary-multipart-upload-start-1+json";
 
+    /**
+     * The content type for performing a standard upload request of a container file to the Black Duck server.
+     */
+    public static final String APPLICATION_CONTAINER_SCAN_DATA_V1 = "application/vnd.blackducksoftware.container-scan-data-1+octet-stream";
+
     // Upload parts content types.
     /**
      * The content type for an upload request of part/chunks of the file up to the Black Duck server.
