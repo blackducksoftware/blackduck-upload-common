@@ -60,8 +60,18 @@ public class ArtifactsUploader extends AbstractUploader<UploadStatus> {
     @Override
     protected Map<String, String> getMultipartUploadStartRequestHeaders() {
         Map<String, String> headers = new HashMap<>();
-        headers.put(HttpHeaders.CONTENT_TYPE, ContentTypes.APPLICATION_MULTIPART_UPLOAD_START_V1);
+        headers.put(HttpHeaders.CONTENT_TYPE, getMultipartUploadStartContentType());
         return headers;
+    }
+
+    /**
+     * Retrieve the Content-Type for the multipart artifacts upload start requests.
+     *
+     * @return the Content-Type for artifacts upload start requests.
+     */
+    @Override
+    protected String getMultipartUploadStartContentType() {
+        return ContentTypes.APPLICATION_MULTIPART_UPLOAD_START_V1;
     }
 
     /**

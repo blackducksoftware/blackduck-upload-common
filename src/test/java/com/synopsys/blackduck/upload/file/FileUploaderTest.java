@@ -22,6 +22,7 @@ import org.mockito.stubbing.OngoingStubbing;
 import com.google.gson.Gson;
 import com.synopsys.blackduck.upload.file.model.MultipartUploadFileMetadata;
 import com.synopsys.blackduck.upload.rest.BlackDuckHttpClient;
+import com.synopsys.blackduck.upload.rest.model.ContentTypes;
 import com.synopsys.blackduck.upload.rest.model.request.MultipartUploadStartRequest;
 import com.synopsys.blackduck.upload.rest.status.BinaryUploadStatus;
 import com.synopsys.blackduck.upload.rest.status.MutableResponseStatus;
@@ -144,7 +145,14 @@ class FileUploaderTest {
         // This simulates a scenario where a thread is dropped and is unrecoverable before an exception is created.
 
         FileUploader fileUploader = new FileUploader(mockHttpClient, uploadRequestPaths, 1, 0, 10);
-        BinaryUploadStatus binaryUploadStatus = fileUploader.multipartUpload(metaData, startRequestHeaders, multipartUploadStartRequest, null, testStatusErrorFunction);
+        BinaryUploadStatus binaryUploadStatus = fileUploader.multipartUpload(
+            metaData,
+            startRequestHeaders,
+            ContentTypes.APPLICATION_BINARY_MULTIPART_UPLOAD_START_V1,
+            multipartUploadStartRequest,
+            null,
+            testStatusErrorFunction
+        );
 
         assertTrue(binaryUploadStatus.isError());
         IntegrationException exception = binaryUploadStatus.getException().orElseThrow(() -> new AssertionError("Could not get response content when it was expected."));

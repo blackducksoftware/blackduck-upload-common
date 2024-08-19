@@ -54,8 +54,13 @@ public class UploaderFactory {
         return new BinaryUploader(uploaderConfig.getUploadChunkSize(), createFileUploader(urlPrefix), createUploadValidator(), binaryScanRequestData);
     }
 
-    // TODO: Make public along with uncommenting test when ready
-    private ContainerUploader createContainerUploader(String urlPrefix) {
+    /**
+     * Construct the uploader for Container uploads.
+     *
+     * @param urlPrefix Used to create {@link UploadRequestPaths}.
+     * @return the {@link ContainerUploader} created.
+     */
+    public ContainerUploader createContainerUploader(String urlPrefix) {
         return new ContainerUploader(uploaderConfig.getUploadChunkSize(), createFileUploader(urlPrefix), createUploadValidator());
     }
 

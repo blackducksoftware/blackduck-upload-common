@@ -47,10 +47,10 @@ public class UploaderFactoryTest {
         assertNotNull(uploaderFactory.createBinaryUploader(DUMMY_PREFIX_URL, new BinaryScanRequestData("projectName", "version", "codeLocationName", "https://code-location-uri")));
     }
 
-    //    @Test
-    //    void testCreateContainerUploader() {
-    //        assertNotNull(uploaderFactory.createContainerUploader(DUMMY_PREFIX_URL));
-    //    }
+    @Test
+    void testCreateContainerUploader() {
+        assertNotNull(uploaderFactory.createContainerUploader(DUMMY_PREFIX_URL));
+    }
     //
     //    @Test
     //    void testCreateReversingLabUploader() {
