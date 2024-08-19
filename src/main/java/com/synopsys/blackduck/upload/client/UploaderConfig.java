@@ -26,7 +26,7 @@ import com.synopsys.integration.rest.proxy.ProxyInfo;
 public class UploaderConfig {
     private final ProxyInfo proxyInfo;
     private final int uploadChunkSize;
-    private final int timeoutInSeconds;
+    private final int blackduckTimeoutInSeconds;
     private final boolean alwaysTrustServerCertificate;
     private final HttpUrl blackDuckUrl;
     private final String apiToken;
@@ -109,7 +109,7 @@ public class UploaderConfig {
     private UploaderConfig(
         ProxyInfo proxyInfo,
         int uploadChunkSize,
-        int timeoutInSeconds,
+        int blackduckTimeoutInSeconds,
         boolean alwaysTrustServerCertificate,
         HttpUrl blackDuckUrl,
         String apiToken,
@@ -120,7 +120,7 @@ public class UploaderConfig {
     ) {
         this.proxyInfo = proxyInfo;
         this.uploadChunkSize = uploadChunkSize;
-        this.timeoutInSeconds = timeoutInSeconds;
+        this.blackduckTimeoutInSeconds = blackduckTimeoutInSeconds;
         this.alwaysTrustServerCertificate = alwaysTrustServerCertificate;
         this.blackDuckUrl = blackDuckUrl;
         this.apiToken = apiToken;
@@ -153,8 +153,8 @@ public class UploaderConfig {
      *
      * @return timeout in seconds.
      */
-    public int getTimeoutInSeconds() {
-        return timeoutInSeconds;
+    public int getBlackDuckTimeoutInSeconds() {
+        return blackduckTimeoutInSeconds;
     }
 
     /**
@@ -246,7 +246,7 @@ public class UploaderConfig {
             return new UploaderConfig(
                 proxyInfo,
                 getUploadChunkSize(),
-                getTimeoutInSeconds(),
+                getBlackDuckTimeoutInSeconds(),
                 isAlwaysTrustServerCertificate(),
                 getBlackDuckUrl().orElse(null),
                 getApiToken().orElse(null),
@@ -285,7 +285,7 @@ public class UploaderConfig {
          *
          * @return configured or default timeout in seconds.
          */
-        public int getTimeoutInSeconds() {
+        public int getBlackDuckTimeoutInSeconds() {
             Optional<String> timeoutInSeconds = Optional.ofNullable(getPropertyValue(EnvironmentProperties.BLACKDUCK_TIMEOUT_SECONDS.getPropertyKey()));
             return timeoutInSeconds.map(Integer::parseInt).orElse(BlackDuckHttpClient.DEFAULT_BLACKDUCK_TIMEOUT_SECONDS);
         }
@@ -408,23 +408,23 @@ public class UploaderConfig {
         /**
          * Replace the timeout when communicating with Black Duck.
          *
-         * @param timeoutInSeconds The time to wait for a response.
+         * @param blackduckTimeoutInSeconds The time to wait for a response.
          *
          * @return builder.
          */
-        public Builder setTimeoutInSeconds(int timeoutInSeconds) {
-            return setTimeoutInSeconds(String.valueOf(timeoutInSeconds));
+        public Builder setBlackDuckTimeoutInSeconds(int blackduckTimeoutInSeconds) {
+            return setBlackDuckTimeoutInSeconds(String.valueOf(blackduckTimeoutInSeconds));
         }
 
         /**
          * Replace the timeout when communicating with Black Duck.
          *
-         * @param timeoutInSeconds The time to wait for a response.
+         * @param blackduckTimeoutInSeconds The time to wait for a response.
          *
          * @return builder.
          */
-        public Builder setTimeoutInSeconds(String timeoutInSeconds) {
-            setPropertyValue(EnvironmentProperties.BLACKDUCK_TIMEOUT_SECONDS, timeoutInSeconds);
+        public Builder setBlackDuckTimeoutInSeconds(String blackduckTimeoutInSeconds) {
+            setPropertyValue(EnvironmentProperties.BLACKDUCK_TIMEOUT_SECONDS, blackduckTimeoutInSeconds);
             return this;
         }
 
