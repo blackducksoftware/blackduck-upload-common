@@ -107,7 +107,7 @@ class BinaryUploaderTestIT {
         BinaryUploader binaryUploader = uploaderFactory.createBinaryUploader(BINARY_URL_PREFIX, binaryScanRequestData);
         BinaryUploadStatus uploadStatus = assertDoesNotThrow(() -> binaryUploader.upload(generatedSampleFilePath));
         assertFalse(uploadStatus.isError());
-        assertEquals(HttpStatus.SC_OK, uploadStatus.getStatusCode());
+        assertEquals(HttpStatus.SC_NO_CONTENT, uploadStatus.getStatusCode());
         assertTrue(uploadStatus.hasContent());
     }
 

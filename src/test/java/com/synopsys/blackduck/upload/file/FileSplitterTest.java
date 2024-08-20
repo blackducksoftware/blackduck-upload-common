@@ -28,16 +28,21 @@ import org.slf4j.LoggerFactory;
 
 import com.synopsys.blackduck.upload.file.model.MultipartUploadFileMetadata;
 import com.synopsys.blackduck.upload.file.model.MultipartUploadFilePart;
+import com.synopsys.blackduck.upload.generator.RandomByteContentFileGenerator;
 
 class FileSplitterTest {
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final Path uploadFilePath = Path.of("src/test/resources/sample_file_100MB.txt");
     private final int chunkSize = 1024 * 1024 * 5; //5 MB
     private final String outputDirectory = "build/resources/test/output/";
     private Path uploadCacheDirectory;
+    private Path generatedSampleFilePath;
 
     @BeforeEach
-    void init() {
+    void init() throws IOException {
+        RandomByteContentFileGenerator randomByteContentFileGenerator = new RandomByteContentFileGenerator();
+        long fileSize = 1024 * 1024 * 100L;
+        generatedSampleFilePath = randomByteContentFileGenerator.generateFile(fileSize, ".txt").orElseThrow(() -> new IOException("Could not generate file"));
+
         uploadCacheDirectory = Path.of(outputDirectory + FileSplitter.UPLOAD_CACHE);
         if (!uploadCacheDirectory.toFile().exists()) {
             assertDoesNotThrow(() -> Files.createDirectories(uploadCacheDirectory));
@@ -62,12 +67,12 @@ class FileSplitterTest {
     void splitFileTest() throws IOException {
         FileSplitter fileSplitter = new FileSplitter();
 
-        MultipartUploadFileMetadata multipartUploadFileMetadata = fileSplitter.splitFile(uploadFilePath, chunkSize);
+        MultipartUploadFileMetadata multipartUploadFileMetadata = fileSplitter.splitFile(generatedSampleFilePath, chunkSize);
         //length returns the size of the file in bytes. 100 MB for this test case
-        long size = uploadFilePath.toAbsolutePath().toFile().length();
+        long size = generatedSampleFilePath.toAbsolutePath().toFile().length();
         int expectedNumberOfChunks = (int) (size / chunkSize);
 
-        assertEquals(uploadFilePath.getFileName().toString(), multipartUploadFileMetadata.getFileName());
+        assertEquals(generatedSampleFilePath.getFileName().toString(), multipartUploadFileMetadata.getFileName());
         assertEquals(expectedNumberOfChunks, multipartUploadFileMetadata.getFileChunks().size());
         validateChunks(multipartUploadFileMetadata, chunkSize);
     }
