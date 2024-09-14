@@ -68,7 +68,7 @@ class FileUploaderTestIT {
 
     @BeforeEach
     void init() {
-        System.setProperty("org.slf4j.simpleLogger.log.com.synopsys", "debug");
+        System.setProperty("org.slf4j.simpleLogger.log.com.blackduck", "debug");
         logger = LoggerFactory.getLogger(getClass());
         boolean bdbaAvailable = testPropertiesManager.getProperty(TestPropertyKey.BDBA_CONTAINER_AVAILABLE.getPropertyKey())
             .map(Boolean::valueOf)
