@@ -8,7 +8,7 @@ import com.synopsys.blackduck.upload.file.UploadRequestPaths;
 import com.synopsys.blackduck.upload.rest.BlackDuckHttpClient;
 import com.synopsys.blackduck.upload.validation.UploadStateManager;
 import com.synopsys.blackduck.upload.validation.UploadValidator;
-import com.synopsys.integration.log.IntLogger;
+import com.blackduck.integration.log.IntLogger;
 
 /**
  * Factory class to create needed uploader.

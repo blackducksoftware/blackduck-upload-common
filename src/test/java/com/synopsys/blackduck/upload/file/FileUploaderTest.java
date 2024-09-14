@@ -28,11 +28,11 @@ import com.synopsys.blackduck.upload.rest.status.BinaryUploadStatus;
 import com.synopsys.blackduck.upload.rest.status.MutableResponseStatus;
 import com.synopsys.blackduck.upload.test.TestPropertyKey;
 import com.synopsys.blackduck.upload.validation.UploadValidator;
-import com.synopsys.integration.exception.IntegrationException;
-import com.synopsys.integration.properties.TestPropertiesManager;
-import com.synopsys.integration.rest.HttpUrl;
-import com.synopsys.integration.rest.request.Request;
-import com.synopsys.integration.rest.response.Response;
+import com.blackduck.integration.exception.IntegrationException;
+import com.blackduck.integration.properties.TestPropertiesManager;
+import com.blackduck.integration.rest.HttpUrl;
+import com.blackduck.integration.rest.request.Request;
+import com.blackduck.integration.rest.response.Response;
 
 class FileUploaderTest {
     private static final TestPropertiesManager testPropertiesManager = TestPropertyKey.getPropertiesManager();

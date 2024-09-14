@@ -14,13 +14,13 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.HttpClientBuilder;
 
 import com.google.gson.Gson;
-import com.synopsys.integration.exception.IntegrationException;
-import com.synopsys.integration.log.IntLogger;
-import com.synopsys.integration.rest.HttpUrl;
-import com.synopsys.integration.rest.client.AuthenticatingIntHttpClient;
-import com.synopsys.integration.rest.proxy.ProxyInfo;
-import com.synopsys.integration.rest.response.Response;
-import com.synopsys.integration.rest.support.AuthenticationSupport;
+import com.blackduck.integration.exception.IntegrationException;
+import com.blackduck.integration.log.IntLogger;
+import com.blackduck.integration.rest.HttpUrl;
+import com.blackduck.integration.rest.client.AuthenticatingIntHttpClient;
+import com.blackduck.integration.rest.proxy.ProxyInfo;
+import com.blackduck.integration.rest.response.Response;
+import com.blackduck.integration.rest.support.AuthenticationSupport;
 
 /**
  * The class to execute Black Duck REST API requests to a Black Duck server.

@@ -13,9 +13,9 @@ import org.slf4j.LoggerFactory;
 import com.google.gson.Gson;
 import com.synopsys.blackduck.upload.client.UploaderConfig;
 import com.synopsys.blackduck.upload.client.model.BinaryScanRequestData;
-import com.synopsys.integration.log.IntLogger;
-import com.synopsys.integration.log.Slf4jIntLogger;
-import com.synopsys.integration.rest.proxy.ProxyInfo;
+import com.blackduck.integration.log.IntLogger;
+import com.blackduck.integration.log.Slf4jIntLogger;
+import com.blackduck.integration.rest.proxy.ProxyInfo;
 
 public class UploaderFactoryTest {
     private static final String DUMMY_PREFIX_URL = "a/b/c";

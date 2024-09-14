@@ -13,10 +13,10 @@ import com.synopsys.blackduck.upload.validation.ErrorCode;
 import com.synopsys.blackduck.upload.validation.UploadError;
 import com.synopsys.blackduck.upload.validation.UploadValidator;
 import com.synopsys.blackduck.upload.validation.UploaderValidationException;
-import com.synopsys.integration.exception.IntegrationException;
-import com.synopsys.integration.properties.PropertiesManager;
-import com.synopsys.integration.rest.HttpUrl;
-import com.synopsys.integration.rest.proxy.ProxyInfo;
+import com.blackduck.integration.exception.IntegrationException;
+import com.blackduck.integration.properties.PropertiesManager;
+import com.blackduck.integration.rest.HttpUrl;
+import com.blackduck.integration.rest.proxy.ProxyInfo;
 
 /**
  * Data object to contain configuration needed for multipart uploads.

@@ -20,7 +20,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import com.synopsys.integration.exception.IntegrationException;
+import com.blackduck.integration.exception.IntegrationException;
 
 class UploadValidatorTest {
     private static final Long TEST_MULTIPART_UPLOAD_THRESHOLD = 1024 * 1024 * 5L; //5 MB

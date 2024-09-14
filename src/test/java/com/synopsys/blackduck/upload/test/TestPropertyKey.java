@@ -3,7 +3,7 @@ package com.synopsys.blackduck.upload.test;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.synopsys.integration.properties.TestPropertiesManager;
+import com.blackduck.integration.properties.TestPropertiesManager;
 
 public enum TestPropertyKey {
     TEST_BLACKDUCK_URL("blackduck.url"),

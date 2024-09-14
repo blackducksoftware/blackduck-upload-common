@@ -15,10 +15,10 @@ import com.synopsys.blackduck.upload.rest.model.request.MultipartUploadStartRequ
 import com.synopsys.blackduck.upload.rest.status.MutableResponseStatus;
 import com.synopsys.blackduck.upload.rest.status.UploadStatus;
 import com.synopsys.blackduck.upload.validation.UploadValidator;
-import com.synopsys.integration.exception.IntegrationException;
-import com.synopsys.integration.function.ThrowingFunction;
-import com.synopsys.integration.rest.body.BodyContent;
-import com.synopsys.integration.rest.response.Response;
+import com.blackduck.integration.exception.IntegrationException;
+import com.blackduck.integration.function.ThrowingFunction;
+import com.blackduck.integration.rest.body.BodyContent;
+import com.blackduck.integration.rest.response.Response;
 
 /**
  * Uploader implementation for Tools uploads.

@@ -33,15 +33,15 @@ import com.synopsys.blackduck.upload.rest.model.response.BinaryFinishResponseCon
 import com.synopsys.blackduck.upload.rest.status.BinaryUploadStatus;
 import com.synopsys.blackduck.upload.rest.status.MutableResponseStatus;
 import com.synopsys.blackduck.upload.test.TestPropertyKey;
-import com.synopsys.integration.exception.IntegrationException;
-import com.synopsys.integration.function.ThrowingFunction;
-import com.synopsys.integration.log.IntLogger;
-import com.synopsys.integration.log.Slf4jIntLogger;
-import com.synopsys.integration.properties.TestPropertiesManager;
-import com.synopsys.integration.rest.HttpUrl;
-import com.synopsys.integration.rest.body.MultipartBodyContent;
-import com.synopsys.integration.rest.proxy.ProxyInfo;
-import com.synopsys.integration.rest.response.Response;
+import com.blackduck.integration.exception.IntegrationException;
+import com.blackduck.integration.function.ThrowingFunction;
+import com.blackduck.integration.log.IntLogger;
+import com.blackduck.integration.log.Slf4jIntLogger;
+import com.blackduck.integration.properties.TestPropertiesManager;
+import com.blackduck.integration.rest.HttpUrl;
+import com.blackduck.integration.rest.body.MultipartBodyContent;
+import com.blackduck.integration.rest.proxy.ProxyInfo;
+import com.blackduck.integration.rest.response.Response;
 
 /**
  * Test the functionality of the FileUploader class using the Binary uploader.

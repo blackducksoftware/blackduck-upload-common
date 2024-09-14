@@ -7,7 +7,7 @@ import java.util.Optional;
 import org.jetbrains.annotations.Nullable;
 
 import com.synopsys.blackduck.upload.rest.model.response.BinaryFinishResponseContent;
-import com.synopsys.integration.exception.IntegrationException;
+import com.blackduck.integration.exception.IntegrationException;
 
 /**
  * Class that represents the overall status of a multipart upload of a binary file that is returned to a user.

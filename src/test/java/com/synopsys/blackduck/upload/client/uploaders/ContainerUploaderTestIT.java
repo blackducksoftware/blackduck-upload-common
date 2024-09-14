@@ -24,12 +24,12 @@ import com.synopsys.blackduck.upload.client.UploaderConfig;
 import com.synopsys.blackduck.upload.generator.RandomByteContentFileGenerator;
 import com.synopsys.blackduck.upload.rest.status.DefaultUploadStatus;
 import com.synopsys.blackduck.upload.test.TestPropertyKey;
-import com.synopsys.integration.exception.IntegrationException;
-import com.synopsys.integration.log.IntLogger;
-import com.synopsys.integration.log.Slf4jIntLogger;
-import com.synopsys.integration.properties.TestPropertiesManager;
-import com.synopsys.integration.rest.HttpUrl;
-import com.synopsys.integration.rest.proxy.ProxyInfo;
+import com.blackduck.integration.exception.IntegrationException;
+import com.blackduck.integration.log.IntLogger;
+import com.blackduck.integration.log.Slf4jIntLogger;
+import com.blackduck.integration.properties.TestPropertiesManager;
+import com.blackduck.integration.rest.HttpUrl;
+import com.blackduck.integration.rest.proxy.ProxyInfo;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ContainerUploaderTestIT {

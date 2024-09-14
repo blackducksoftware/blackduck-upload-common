@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.synopsys.integration.exception.IntegrationException;
+import com.blackduck.integration.exception.IntegrationException;
 
 /**
  * Thrown to indicate that an error or multiple errors have occurred during validation of the upload.

@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 import org.jetbrains.annotations.Nullable;
 
-import com.synopsys.integration.exception.IntegrationException;
+import com.blackduck.integration.exception.IntegrationException;
 
 /**
  * Class that represents the overall status of a multipart upload file that is returned to a user.

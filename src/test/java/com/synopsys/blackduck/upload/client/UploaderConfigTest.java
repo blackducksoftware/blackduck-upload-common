@@ -15,9 +15,9 @@ import org.junit.jupiter.api.Test;
 
 import com.synopsys.blackduck.upload.rest.BlackDuckHttpClient;
 import com.synopsys.blackduck.upload.validation.UploadValidator;
-import com.synopsys.integration.exception.IntegrationException;
-import com.synopsys.integration.rest.HttpUrl;
-import com.synopsys.integration.rest.proxy.ProxyInfo;
+import com.blackduck.integration.exception.IntegrationException;
+import com.blackduck.integration.rest.HttpUrl;
+import com.blackduck.integration.rest.proxy.ProxyInfo;
 
 class UploaderConfigTest {
     private static final ProxyInfo PROXY_INFO = ProxyInfo.NO_PROXY_INFO;

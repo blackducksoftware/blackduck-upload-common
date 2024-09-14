@@ -10,7 +10,7 @@ import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.synopsys.integration.exception.IntegrationException;
+import com.blackduck.integration.exception.IntegrationException;
 
 /**
  * Class containing helper methods to perform validation for uploader configurations and uploader I/O operations.
