@@ -12,7 +12,6 @@ import java.util.Properties;
 import java.util.UUID;
 
 import org.apache.http.HttpStatus;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -82,7 +81,7 @@ class ContainerUploaderTestIT {
         uploaderFactory = new UploaderFactory(uploaderConfig, intLogger, gson);
 
         ContainerUploader containerUploader = uploaderFactory.createContainerUploader(String.format("/api/storage/containers/%s", UUID.randomUUID()));
-        DefaultUploadStatus uploadStatus = Assertions.assertDoesNotThrow(() -> containerUploader.upload(generatedSampleFilePath));
+        DefaultUploadStatus uploadStatus = assertDoesNotThrow(() -> containerUploader.upload(generatedSampleFilePath));
         assertFalse(uploadStatus.isError());
         assertEquals(HttpStatus.SC_CREATED, uploadStatus.getStatusCode());
         // A container upload does not contain a response body, therefore there should be no content returned other than a 201 response code.
@@ -99,7 +98,7 @@ class ContainerUploaderTestIT {
         uploaderFactory = new UploaderFactory(uploaderConfig, intLogger, gson);
 
         ContainerUploader containerUploader = uploaderFactory.createContainerUploader(String.format("/api/storage/containers/%s", UUID.randomUUID()));
-        DefaultUploadStatus uploadStatus = Assertions.assertDoesNotThrow(() -> containerUploader.upload(generatedSampleFilePath));
+        DefaultUploadStatus uploadStatus = assertDoesNotThrow(() -> containerUploader.upload(generatedSampleFilePath));
         assertFalse(uploadStatus.isError());
         assertEquals(HttpStatus.SC_NO_CONTENT, uploadStatus.getStatusCode());
         assertFalse(uploadStatus.hasContent());

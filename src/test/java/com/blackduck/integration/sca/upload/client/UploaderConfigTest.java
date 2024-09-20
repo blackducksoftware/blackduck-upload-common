@@ -10,7 +10,6 @@ import java.io.File;
 import java.util.Properties;
 
 import org.apache.commons.lang3.RandomStringUtils;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -123,7 +122,7 @@ class UploaderConfigTest {
 
     @Test
     void testBuildValidationTimeout() {
-        UploaderConfig.Builder uploaderConfigBuilder = Assertions.assertDoesNotThrow(() -> UploaderConfig.createConfigFromFile(PROXY_INFO, testPropertiesFile));
+        UploaderConfig.Builder uploaderConfigBuilder = assertDoesNotThrow(() -> UploaderConfig.createConfigFromFile(PROXY_INFO, testPropertiesFile));
         uploaderConfigBuilder.setBlackDuckTimeoutInSeconds(BLACKDUCK_TIMEOUT_IN_SECONDS);
         IntegrationException integrationException = assertThrows(IntegrationException.class, uploaderConfigBuilder::build);
         assertFalse(integrationException.getMessage().contains(EnvironmentProperties.BLACKDUCK_TIMEOUT_SECONDS.getPropertyKey()));
@@ -131,7 +130,7 @@ class UploaderConfigTest {
 
     @Test
     void testBuildValidationAlwaysTrust() {
-        UploaderConfig.Builder uploaderConfigBuilder = Assertions.assertDoesNotThrow(() -> UploaderConfig.createConfigFromFile(PROXY_INFO, testPropertiesFile));
+        UploaderConfig.Builder uploaderConfigBuilder = assertDoesNotThrow(() -> UploaderConfig.createConfigFromFile(PROXY_INFO, testPropertiesFile));
         uploaderConfigBuilder.setAlwaysTrustServerCertificate(ALWAYS_TRUST_CERT);
         IntegrationException integrationException = assertThrows(IntegrationException.class, uploaderConfigBuilder::build);
         assertFalse(integrationException.getMessage().contains(EnvironmentProperties.BLACKDUCK_TRUST_CERT.getPropertyKey()));
@@ -139,7 +138,7 @@ class UploaderConfigTest {
 
     @Test
     void testBuildValidationBlackduckUrl() {
-        UploaderConfig.Builder uploaderConfigBuilder = Assertions.assertDoesNotThrow(() -> UploaderConfig.createConfigFromFile(PROXY_INFO, testPropertiesFile));
+        UploaderConfig.Builder uploaderConfigBuilder = assertDoesNotThrow(() -> UploaderConfig.createConfigFromFile(PROXY_INFO, testPropertiesFile));
         uploaderConfigBuilder.setBlackDuckUrl(httpUrl);
         IntegrationException integrationException = assertThrows(IntegrationException.class, uploaderConfigBuilder::build);
         assertFalse(integrationException.getMessage().contains(EnvironmentProperties.BLACKDUCK_URL.getPropertyKey()));
@@ -147,7 +146,7 @@ class UploaderConfigTest {
 
     @Test
     void testBuildValidationApiToken() {
-        UploaderConfig.Builder uploaderConfigBuilder = Assertions.assertDoesNotThrow(() -> UploaderConfig.createConfigFromFile(PROXY_INFO, testPropertiesFile));
+        UploaderConfig.Builder uploaderConfigBuilder = assertDoesNotThrow(() -> UploaderConfig.createConfigFromFile(PROXY_INFO, testPropertiesFile));
         uploaderConfigBuilder.setApiToken(API_TOKEN);
         IntegrationException integrationException = assertThrows(IntegrationException.class, uploaderConfigBuilder::build);
         assertFalse(integrationException.getMessage().contains(EnvironmentProperties.BLACKDUCK_API_TOKEN.getPropertyKey()));
@@ -156,28 +155,28 @@ class UploaderConfigTest {
     @Test
     void testOptionalBuildValidationMultipartUploadThreshold() {
         // blackduck.multipart.upload.threshold is an optional property, therefore if it is omitted it shouldn't be included in the validation error messages.
-        UploaderConfig.Builder uploaderConfigBuilder = Assertions.assertDoesNotThrow(() -> UploaderConfig.createConfigFromFile(PROXY_INFO, testPropertiesFile));
+        UploaderConfig.Builder uploaderConfigBuilder = assertDoesNotThrow(() -> UploaderConfig.createConfigFromFile(PROXY_INFO, testPropertiesFile));
         IntegrationException integrationException = assertThrows(IntegrationException.class, uploaderConfigBuilder::build);
         assertFalse(integrationException.getMessage().contains(EnvironmentProperties.BLACKDUCK_MULTIPART_UPLOAD_THRESHOLD.getPropertyKey()));
     }
 
     @Test
     void testOptionalBuildValidationMultipartUploadPartRetryAttempts() {
-        UploaderConfig.Builder uploaderConfigBuilder = Assertions.assertDoesNotThrow(() -> UploaderConfig.createConfigFromFile(PROXY_INFO, testPropertiesFile));
+        UploaderConfig.Builder uploaderConfigBuilder = assertDoesNotThrow(() -> UploaderConfig.createConfigFromFile(PROXY_INFO, testPropertiesFile));
         IntegrationException integrationException = assertThrows(IntegrationException.class, uploaderConfigBuilder::build);
         assertFalse(integrationException.getMessage().contains(EnvironmentProperties.BLACKDUCK_MULTIPART_UPLOAD_PART_RETRY_ATTEMPTS.getPropertyKey()));
     }
 
     @Test
     void testOptionalBuildValidationMultipartUploadPartRetryInitialInterval() {
-        UploaderConfig.Builder uploaderConfigBuilder = Assertions.assertDoesNotThrow(() -> UploaderConfig.createConfigFromFile(PROXY_INFO, testPropertiesFile));
+        UploaderConfig.Builder uploaderConfigBuilder = assertDoesNotThrow(() -> UploaderConfig.createConfigFromFile(PROXY_INFO, testPropertiesFile));
         IntegrationException integrationException = assertThrows(IntegrationException.class, uploaderConfigBuilder::build);
         assertFalse(integrationException.getMessage().contains(EnvironmentProperties.BLACKDUCK_MULTIPART_UPLOAD_PART_RETRY_INITIAL_INTERVAL.getPropertyKey()));
     }
 
     @Test
     void testOptionalBuildValidationMultipartUploadTimeoutMinutes() {
-        UploaderConfig.Builder uploaderConfigBuilder = Assertions.assertDoesNotThrow(() -> UploaderConfig.createConfigFromFile(PROXY_INFO, testPropertiesFile));
+        UploaderConfig.Builder uploaderConfigBuilder = assertDoesNotThrow(() -> UploaderConfig.createConfigFromFile(PROXY_INFO, testPropertiesFile));
         IntegrationException integrationException = assertThrows(IntegrationException.class, uploaderConfigBuilder::build);
         assertFalse(integrationException.getMessage().contains(EnvironmentProperties.BLACKDUCK_MULTIPART_UPLOAD_TIMEOUT_MINUTES.getPropertyKey()));
 
