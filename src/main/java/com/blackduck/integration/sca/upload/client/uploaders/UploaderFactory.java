@@ -7,6 +7,7 @@
  */
 package com.blackduck.integration.sca.upload.client.uploaders;
 
+import com.blackduck.integration.log.IntLogger;
 import com.blackduck.integration.sca.upload.client.UploaderConfig;
 import com.blackduck.integration.sca.upload.client.model.BinaryScanRequestData;
 import com.blackduck.integration.sca.upload.file.FileUploader;
@@ -14,7 +15,6 @@ import com.blackduck.integration.sca.upload.file.UploadRequestPaths;
 import com.blackduck.integration.sca.upload.rest.BlackDuckHttpClient;
 import com.blackduck.integration.sca.upload.validation.UploadStateManager;
 import com.blackduck.integration.sca.upload.validation.UploadValidator;
-import com.blackduck.integration.log.IntLogger;
 import com.google.gson.Gson;
 
 /**

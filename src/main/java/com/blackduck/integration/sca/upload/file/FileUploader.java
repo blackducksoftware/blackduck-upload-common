@@ -24,14 +24,6 @@ import org.apache.http.entity.InputStreamEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.blackduck.integration.sca.upload.file.model.MultipartUploadFileMetadata;
-import com.blackduck.integration.sca.upload.file.model.MultipartUploadFilePart;
-import com.blackduck.integration.sca.upload.rest.BlackDuckHttpClient;
-import com.blackduck.integration.sca.upload.rest.model.ContentTypes;
-import com.blackduck.integration.sca.upload.rest.model.request.MultipartUploadStartRequest;
-import com.blackduck.integration.sca.upload.rest.status.MutableResponseStatus;
-import com.blackduck.integration.sca.upload.rest.status.UploadStatus;
-import com.blackduck.integration.sca.upload.validation.UploadValidator;
 import com.blackduck.integration.exception.IntegrationException;
 import com.blackduck.integration.function.ThrowingFunction;
 import com.blackduck.integration.rest.HttpMethod;
@@ -41,6 +33,14 @@ import com.blackduck.integration.rest.body.EntityBodyContent;
 import com.blackduck.integration.rest.body.StringBodyContent;
 import com.blackduck.integration.rest.request.Request;
 import com.blackduck.integration.rest.response.Response;
+import com.blackduck.integration.sca.upload.file.model.MultipartUploadFileMetadata;
+import com.blackduck.integration.sca.upload.file.model.MultipartUploadFilePart;
+import com.blackduck.integration.sca.upload.rest.BlackDuckHttpClient;
+import com.blackduck.integration.sca.upload.rest.model.ContentTypes;
+import com.blackduck.integration.sca.upload.rest.model.request.MultipartUploadStartRequest;
+import com.blackduck.integration.sca.upload.rest.status.MutableResponseStatus;
+import com.blackduck.integration.sca.upload.rest.status.UploadStatus;
+import com.blackduck.integration.sca.upload.validation.UploadValidator;
 import com.google.gson.Gson;
 
 /**

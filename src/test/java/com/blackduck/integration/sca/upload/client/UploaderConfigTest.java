@@ -14,11 +14,11 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.blackduck.integration.sca.upload.rest.BlackDuckHttpClient;
-import com.blackduck.integration.sca.upload.validation.UploadValidator;
 import com.blackduck.integration.exception.IntegrationException;
 import com.blackduck.integration.rest.HttpUrl;
 import com.blackduck.integration.rest.proxy.ProxyInfo;
+import com.blackduck.integration.sca.upload.rest.BlackDuckHttpClient;
+import com.blackduck.integration.sca.upload.validation.UploadValidator;
 
 class UploaderConfigTest {
     private static final ProxyInfo PROXY_INFO = ProxyInfo.NO_PROXY_INFO;

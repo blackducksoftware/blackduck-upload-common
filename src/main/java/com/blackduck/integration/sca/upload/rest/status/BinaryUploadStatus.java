@@ -13,8 +13,8 @@ import java.util.Optional;
 
 import org.jetbrains.annotations.Nullable;
 
-import com.blackduck.integration.sca.upload.rest.model.response.BinaryFinishResponseContent;
 import com.blackduck.integration.exception.IntegrationException;
+import com.blackduck.integration.sca.upload.rest.model.response.BinaryFinishResponseContent;
 
 /**
  * Class that represents the overall status of a multipart upload of a binary file that is returned to a user.

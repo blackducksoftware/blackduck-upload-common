@@ -16,6 +16,10 @@ import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.blackduck.integration.exception.IntegrationException;
+import com.blackduck.integration.function.ThrowingFunction;
+import com.blackduck.integration.rest.body.BodyContent;
+import com.blackduck.integration.rest.response.Response;
 import com.blackduck.integration.sca.upload.client.EnvironmentProperties;
 import com.blackduck.integration.sca.upload.file.FileSplitter;
 import com.blackduck.integration.sca.upload.file.FileUploader;
@@ -24,10 +28,6 @@ import com.blackduck.integration.sca.upload.rest.model.request.MultipartUploadSt
 import com.blackduck.integration.sca.upload.rest.status.MutableResponseStatus;
 import com.blackduck.integration.sca.upload.rest.status.UploadStatus;
 import com.blackduck.integration.sca.upload.validation.UploadValidator;
-import com.blackduck.integration.exception.IntegrationException;
-import com.blackduck.integration.function.ThrowingFunction;
-import com.blackduck.integration.rest.body.BodyContent;
-import com.blackduck.integration.rest.response.Response;
 
 /**
  * Abstract class containing all common file upload methods.

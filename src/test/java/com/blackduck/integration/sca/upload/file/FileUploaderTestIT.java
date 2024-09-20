@@ -22,6 +22,15 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.blackduck.integration.exception.IntegrationException;
+import com.blackduck.integration.function.ThrowingFunction;
+import com.blackduck.integration.log.IntLogger;
+import com.blackduck.integration.log.Slf4jIntLogger;
+import com.blackduck.integration.properties.TestPropertiesManager;
+import com.blackduck.integration.rest.HttpUrl;
+import com.blackduck.integration.rest.body.MultipartBodyContent;
+import com.blackduck.integration.rest.proxy.ProxyInfo;
+import com.blackduck.integration.rest.response.Response;
 import com.blackduck.integration.sca.upload.client.model.BinaryScanRequestData;
 import com.blackduck.integration.sca.upload.file.model.MultipartUploadFileMetadata;
 import com.blackduck.integration.sca.upload.file.model.MultipartUploadFilePart;
@@ -32,15 +41,6 @@ import com.blackduck.integration.sca.upload.rest.model.response.BinaryFinishResp
 import com.blackduck.integration.sca.upload.rest.status.BinaryUploadStatus;
 import com.blackduck.integration.sca.upload.rest.status.MutableResponseStatus;
 import com.blackduck.integration.sca.upload.test.TestPropertyKey;
-import com.blackduck.integration.exception.IntegrationException;
-import com.blackduck.integration.function.ThrowingFunction;
-import com.blackduck.integration.log.IntLogger;
-import com.blackduck.integration.log.Slf4jIntLogger;
-import com.blackduck.integration.properties.TestPropertiesManager;
-import com.blackduck.integration.rest.HttpUrl;
-import com.blackduck.integration.rest.body.MultipartBodyContent;
-import com.blackduck.integration.rest.proxy.ProxyInfo;
-import com.blackduck.integration.rest.response.Response;
 import com.google.gson.Gson;
 
 /**

@@ -10,11 +10,11 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.blackduck.integration.sca.upload.client.UploaderConfig;
-import com.blackduck.integration.sca.upload.client.model.BinaryScanRequestData;
 import com.blackduck.integration.log.IntLogger;
 import com.blackduck.integration.log.Slf4jIntLogger;
 import com.blackduck.integration.rest.proxy.ProxyInfo;
+import com.blackduck.integration.sca.upload.client.UploaderConfig;
+import com.blackduck.integration.sca.upload.client.model.BinaryScanRequestData;
 import com.google.gson.Gson;
 
 public class UploaderFactoryTest {

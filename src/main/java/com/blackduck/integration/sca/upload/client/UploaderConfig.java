@@ -15,15 +15,15 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.collections.CollectionUtils;
 
+import com.blackduck.integration.exception.IntegrationException;
+import com.blackduck.integration.properties.PropertiesManager;
+import com.blackduck.integration.rest.HttpUrl;
+import com.blackduck.integration.rest.proxy.ProxyInfo;
 import com.blackduck.integration.sca.upload.rest.BlackDuckHttpClient;
 import com.blackduck.integration.sca.upload.validation.ErrorCode;
 import com.blackduck.integration.sca.upload.validation.UploadError;
 import com.blackduck.integration.sca.upload.validation.UploadValidator;
 import com.blackduck.integration.sca.upload.validation.UploaderValidationException;
-import com.blackduck.integration.exception.IntegrationException;
-import com.blackduck.integration.properties.PropertiesManager;
-import com.blackduck.integration.rest.HttpUrl;
-import com.blackduck.integration.rest.proxy.ProxyInfo;
 
 /**
  * Data object to contain configuration needed for multipart uploads.

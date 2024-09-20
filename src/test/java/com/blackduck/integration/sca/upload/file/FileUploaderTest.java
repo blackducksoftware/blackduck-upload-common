@@ -19,6 +19,11 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 import org.mockito.stubbing.OngoingStubbing;
 
+import com.blackduck.integration.exception.IntegrationException;
+import com.blackduck.integration.properties.TestPropertiesManager;
+import com.blackduck.integration.rest.HttpUrl;
+import com.blackduck.integration.rest.request.Request;
+import com.blackduck.integration.rest.response.Response;
 import com.blackduck.integration.sca.upload.file.model.MultipartUploadFileMetadata;
 import com.blackduck.integration.sca.upload.rest.BlackDuckHttpClient;
 import com.blackduck.integration.sca.upload.rest.model.ContentTypes;
@@ -27,11 +32,6 @@ import com.blackduck.integration.sca.upload.rest.status.BinaryUploadStatus;
 import com.blackduck.integration.sca.upload.rest.status.MutableResponseStatus;
 import com.blackduck.integration.sca.upload.test.TestPropertyKey;
 import com.blackduck.integration.sca.upload.validation.UploadValidator;
-import com.blackduck.integration.exception.IntegrationException;
-import com.blackduck.integration.properties.TestPropertiesManager;
-import com.blackduck.integration.rest.HttpUrl;
-import com.blackduck.integration.rest.request.Request;
-import com.blackduck.integration.rest.response.Response;
 import com.google.gson.Gson;
 
 class FileUploaderTest {

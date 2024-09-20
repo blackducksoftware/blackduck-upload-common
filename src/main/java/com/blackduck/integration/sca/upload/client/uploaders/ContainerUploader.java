@@ -17,6 +17,11 @@ import org.apache.http.HttpHeaders;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.FileEntity;
 
+import com.blackduck.integration.exception.IntegrationException;
+import com.blackduck.integration.function.ThrowingFunction;
+import com.blackduck.integration.rest.body.BodyContent;
+import com.blackduck.integration.rest.body.EntityBodyContent;
+import com.blackduck.integration.rest.response.Response;
 import com.blackduck.integration.sca.upload.file.FileUploader;
 import com.blackduck.integration.sca.upload.file.model.MultipartUploadFileMetadata;
 import com.blackduck.integration.sca.upload.rest.model.ContentTypes;
@@ -25,11 +30,6 @@ import com.blackduck.integration.sca.upload.rest.status.DefaultUploadStatus;
 import com.blackduck.integration.sca.upload.rest.status.MutableResponseStatus;
 import com.blackduck.integration.sca.upload.rest.status.UploadStatus;
 import com.blackduck.integration.sca.upload.validation.UploadValidator;
-import com.blackduck.integration.exception.IntegrationException;
-import com.blackduck.integration.function.ThrowingFunction;
-import com.blackduck.integration.rest.body.BodyContent;
-import com.blackduck.integration.rest.body.EntityBodyContent;
-import com.blackduck.integration.rest.response.Response;
 
 /**
  * Uploader implementation for Container uploads.

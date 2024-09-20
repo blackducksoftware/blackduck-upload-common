@@ -20,16 +20,16 @@ import org.junit.jupiter.api.TestInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.blackduck.integration.sca.upload.client.UploaderConfig;
-import com.blackduck.integration.sca.upload.generator.RandomByteContentFileGenerator;
-import com.blackduck.integration.sca.upload.rest.status.DefaultUploadStatus;
-import com.blackduck.integration.sca.upload.test.TestPropertyKey;
 import com.blackduck.integration.exception.IntegrationException;
 import com.blackduck.integration.log.IntLogger;
 import com.blackduck.integration.log.Slf4jIntLogger;
 import com.blackduck.integration.properties.TestPropertiesManager;
 import com.blackduck.integration.rest.HttpUrl;
 import com.blackduck.integration.rest.proxy.ProxyInfo;
+import com.blackduck.integration.sca.upload.client.UploaderConfig;
+import com.blackduck.integration.sca.upload.generator.RandomByteContentFileGenerator;
+import com.blackduck.integration.sca.upload.rest.status.DefaultUploadStatus;
+import com.blackduck.integration.sca.upload.test.TestPropertyKey;
 import com.google.gson.Gson;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

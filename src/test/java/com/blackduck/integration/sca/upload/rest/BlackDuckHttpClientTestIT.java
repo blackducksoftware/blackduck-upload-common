@@ -18,7 +18,6 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.blackduck.integration.sca.upload.test.TestPropertyKey;
 import com.blackduck.integration.exception.IntegrationException;
 import com.blackduck.integration.log.IntLogger;
 import com.blackduck.integration.log.Slf4jIntLogger;
@@ -27,6 +26,7 @@ import com.blackduck.integration.rest.HttpMethod;
 import com.blackduck.integration.rest.HttpUrl;
 import com.blackduck.integration.rest.proxy.ProxyInfo;
 import com.blackduck.integration.rest.response.Response;
+import com.blackduck.integration.sca.upload.test.TestPropertyKey;
 import com.google.gson.Gson;
 
 public class BlackDuckHttpClientTestIT {
