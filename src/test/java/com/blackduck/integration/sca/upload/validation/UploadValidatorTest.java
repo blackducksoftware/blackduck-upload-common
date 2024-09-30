@@ -22,8 +22,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mockito;
 
-import com.blackduck.sca.upload.generator.RandomByteContentFileGenerator;
 import com.blackduck.integration.exception.IntegrationException;
+import com.blackduck.integration.sca.upload.generator.RandomByteContentFileGenerator;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class UploadValidatorTest {

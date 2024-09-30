@@ -26,6 +26,7 @@ import com.blackduck.integration.rest.HttpUrl;
 import com.blackduck.integration.rest.request.Request;
 import com.blackduck.integration.rest.response.Response;
 import com.blackduck.integration.sca.upload.file.model.MultipartUploadFileMetadata;
+import com.blackduck.integration.sca.upload.generator.RandomByteContentFileGenerator;
 import com.blackduck.integration.sca.upload.rest.BlackDuckHttpClient;
 import com.blackduck.integration.sca.upload.rest.model.ContentTypes;
 import com.blackduck.integration.sca.upload.rest.model.request.MultipartUploadStartRequest;

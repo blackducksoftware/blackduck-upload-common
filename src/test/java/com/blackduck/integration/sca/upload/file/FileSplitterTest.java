@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import com.blackduck.integration.sca.upload.file.model.MultipartUploadFileMetadata;
 import com.blackduck.integration.sca.upload.file.model.MultipartUploadFilePart;
-import com.synopsys.blackduck.upload.generator.RandomByteContentFileGenerator;
+import com.blackduck.integration.sca.upload.generator.RandomByteContentFileGenerator;
 
 class FileSplitterTest {
     private final Logger logger = LoggerFactory.getLogger(getClass());

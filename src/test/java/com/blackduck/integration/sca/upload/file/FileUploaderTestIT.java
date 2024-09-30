@@ -37,6 +37,7 @@ import com.blackduck.integration.rest.response.Response;
 import com.blackduck.integration.sca.upload.client.model.BinaryScanRequestData;
 import com.blackduck.integration.sca.upload.file.model.MultipartUploadFileMetadata;
 import com.blackduck.integration.sca.upload.file.model.MultipartUploadFilePart;
+import com.blackduck.integration.sca.upload.generator.RandomByteContentFileGenerator;
 import com.blackduck.integration.sca.upload.rest.BlackDuckHttpClient;
 import com.blackduck.integration.sca.upload.rest.model.ContentTypes;
 import com.blackduck.integration.sca.upload.rest.model.request.BinaryMultipartUploadStartRequest;
@@ -78,7 +79,6 @@ class FileUploaderTestIT {
     @BeforeEach
     void init() {
         System.setProperty("org.slf4j.simpleLogger.log.com.blackduck", "debug");
-        logger = LoggerFactory.getLogger(getClass());
         boolean bdbaAvailable = testPropertiesManager.getProperty(TestPropertyKey.BDBA_CONTAINER_AVAILABLE.getPropertyKey())
             .map(Boolean::valueOf)
             .orElse(false);
