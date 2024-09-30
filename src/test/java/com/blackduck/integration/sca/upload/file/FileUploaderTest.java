@@ -14,6 +14,7 @@ import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
@@ -25,6 +26,7 @@ import com.blackduck.integration.rest.HttpUrl;
 import com.blackduck.integration.rest.request.Request;
 import com.blackduck.integration.rest.response.Response;
 import com.blackduck.integration.sca.upload.file.model.MultipartUploadFileMetadata;
+import com.blackduck.integration.sca.upload.generator.RandomByteContentFileGenerator;
 import com.blackduck.integration.sca.upload.rest.BlackDuckHttpClient;
 import com.blackduck.integration.sca.upload.rest.model.ContentTypes;
 import com.blackduck.integration.sca.upload.rest.model.request.MultipartUploadStartRequest;
@@ -34,10 +36,10 @@ import com.blackduck.integration.sca.upload.test.TestPropertyKey;
 import com.blackduck.integration.sca.upload.validation.UploadValidator;
 import com.google.gson.Gson;
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class FileUploaderTest {
     private static final TestPropertiesManager testPropertiesManager = TestPropertyKey.getPropertiesManager();
     private static final int CHUNK_SIZE = 1024 * 1024 * 5; // 5MB
-    private static final String SAMPLE_FILE_PATH = "src/test/resources/sample_file_100MB.txt";
 
     private static MultipartUploadFileMetadata metaData;
     private final UploadRequestPaths uploadRequestPaths = new UploadRequestPaths("/api/uploads/");
@@ -48,8 +50,11 @@ class FileUploaderTest {
     private MutableResponseStatus mutableResponseStatus;
 
     @BeforeAll
-    static void initAll() throws IOException {
-        metaData = new FileSplitter().splitFile(Path.of(SAMPLE_FILE_PATH), CHUNK_SIZE);
+    void initAll() throws IOException {
+        RandomByteContentFileGenerator randomByteContentFileGenerator = new RandomByteContentFileGenerator();
+        long fileSize = 1024 * 1024 * 100L;
+        Path generatedSampleFilePath = randomByteContentFileGenerator.generateFile(fileSize, ".bin").orElseThrow(() -> new IOException("Could not generate file"));
+        metaData = new FileSplitter().splitFile(generatedSampleFilePath, CHUNK_SIZE);
     }
 
     @BeforeEach

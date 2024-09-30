@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.List;
@@ -17,8 +18,10 @@ import java.util.UUID;
 import java.util.function.BiFunction;
 
 import org.apache.http.HttpHeaders;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +37,7 @@ import com.blackduck.integration.rest.response.Response;
 import com.blackduck.integration.sca.upload.client.model.BinaryScanRequestData;
 import com.blackduck.integration.sca.upload.file.model.MultipartUploadFileMetadata;
 import com.blackduck.integration.sca.upload.file.model.MultipartUploadFilePart;
+import com.blackduck.integration.sca.upload.generator.RandomByteContentFileGenerator;
 import com.blackduck.integration.sca.upload.rest.BlackDuckHttpClient;
 import com.blackduck.integration.sca.upload.rest.model.ContentTypes;
 import com.blackduck.integration.sca.upload.rest.model.request.BinaryMultipartUploadStartRequest;
@@ -49,27 +53,32 @@ import com.google.gson.Gson;
  * Note: In order to run this integration test, the configured Blackduck server must be running a bdba-worker. Without this, this test will fail attempting to communicate with
  * Blackduck. If bdba-worker is running and the TestPropertyKey.BDBA_CONTAINER_AVAILABLE is set to "true", then the tests in this class will run. Otherwise, these tests are skipped.
  */
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class FileUploaderTestIT {
     private static final TestPropertiesManager testPropertiesManager = TestPropertyKey.getPropertiesManager();
 
-    private Logger logger;
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private final UploadRequestPaths uploadRequestPaths = new UploadRequestPaths("/api/uploads/");
     private final int chunkSize = 1024 * 1024 * 5; // 5MB
-    private final String sampleFilePath = "src/test/resources/sample_file_100MB.txt";
-    //TODO: This value should be loaded by TestProperties once available. See HUB-42176.
-
-    private BlackDuckHttpClient httpClient;
     private final FileSplitter fileSplitter = new FileSplitter();
+    private BlackDuckHttpClient httpClient;
     private BinaryScanRequestData binaryScanRequestData;
+    private Path generatedSampleFilePath;
     // See unit tests for retry
     private int retryAttempts = 0;
     private long retryInitialInterval = 0;
     private final int uploadTimeoutMinutes = 10;
 
+    @BeforeAll
+    void createSampleFile() throws IOException {
+        RandomByteContentFileGenerator randomByteContentFileGenerator = new RandomByteContentFileGenerator();
+        long fileSize = 1024 * 1024 * 100L;
+        generatedSampleFilePath = randomByteContentFileGenerator.generateFile(fileSize, ".bin").orElseThrow(() -> new IOException("Could not generate file"));
+    }
+
     @BeforeEach
     void init() {
         System.setProperty("org.slf4j.simpleLogger.log.com.blackduck", "debug");
-        logger = LoggerFactory.getLogger(getClass());
         boolean bdbaAvailable = testPropertiesManager.getProperty(TestPropertyKey.BDBA_CONTAINER_AVAILABLE.getPropertyKey())
             .map(Boolean::valueOf)
             .orElse(false);
@@ -132,7 +141,7 @@ class FileUploaderTestIT {
     void testUpload() throws Exception {
         FileUploader fileUploader = new FileUploader(httpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, uploadTimeoutMinutes);
         MultipartBodyContent bodyContent = new MultipartBodyContent(
-            Map.of("fileupload", Path.of(sampleFilePath).toFile()),
+            Map.of("fileupload", generatedSampleFilePath.toFile()),
             Map.of(
                 "projectName", binaryScanRequestData.getProjectName(),
                 "version", binaryScanRequestData.getVersion(),
@@ -152,7 +161,7 @@ class FileUploaderTestIT {
 
     @Test
     void testMultipartUpload() throws Exception {
-        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(Path.of(sampleFilePath), chunkSize);
+        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize);
 
         FileUploader fileUploader = new FileUploader(httpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, uploadTimeoutMinutes);
         Map<String, String> startRequestHeaders = Map.of(HttpHeaders.CONTENT_TYPE, ContentTypes.APPLICATION_BINARY_MULTIPART_UPLOAD_START_V1);
@@ -177,7 +186,7 @@ class FileUploaderTestIT {
 
     @Test
     void testMultipartUploadFailure() throws Exception {
-        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(Path.of(sampleFilePath), chunkSize);
+        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize);
 
         //Modify the part list to create an invalid checksum on one of the parts.
         MultipartUploadFileMetadata invalidMetadata = new MultipartUploadFileMetadata(
@@ -217,7 +226,7 @@ class FileUploaderTestIT {
     // Multipart upload tests
     @Test
     void testMultipartUploadStart() throws Exception {
-        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(Path.of(sampleFilePath), chunkSize);
+        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize);
         MutableResponseStatus mutableResponseStatus = new MutableResponseStatus(-1, "unknown status message");
 
         FileUploader fileUploader = new FileUploader(httpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, uploadTimeoutMinutes);
@@ -234,7 +243,7 @@ class FileUploaderTestIT {
 
     @Test
     void testMultipartUploadParts() throws Exception {
-        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(Path.of(sampleFilePath), chunkSize);
+        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize);
         MutableResponseStatus mutableResponseStatus = new MutableResponseStatus(-1, "unknown status message");
 
         FileUploader fileUploader = new FileUploader(httpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, uploadTimeoutMinutes);
@@ -253,7 +262,7 @@ class FileUploaderTestIT {
 
     @Test
     void testMultipartUploadPartsFail() throws Exception {
-        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(Path.of(sampleFilePath), chunkSize);
+        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize);
         MutableResponseStatus mutableResponseStatus = new MutableResponseStatus(-1, "unknown status message");
 
         BlackDuckHttpClient incorrectHttpClient = new BlackDuckHttpClient(
@@ -293,7 +302,7 @@ class FileUploaderTestIT {
 
     @Test
     void testUploadCancel() throws Exception {
-        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(Path.of(sampleFilePath), chunkSize);
+        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize);
         MutableResponseStatus mutableResponseStatus = new MutableResponseStatus(-1, "unknown status message");
 
         //Modify the part list to create an invalid checksum on one of the parts.
@@ -334,7 +343,7 @@ class FileUploaderTestIT {
 
     @Test
     void testMultipartUploadFinish() throws Exception {
-        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(Path.of(sampleFilePath), chunkSize);
+        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize);
         MutableResponseStatus mutableResponseStatus = new MutableResponseStatus(-1, "unknown status message");
 
         FileUploader fileUploader = new FileUploader(httpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, uploadTimeoutMinutes);
@@ -360,7 +369,7 @@ class FileUploaderTestIT {
 
     @Test
     void testFinishBadChecksum() throws Exception {
-        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(Path.of(sampleFilePath), chunkSize);
+        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize);
         MutableResponseStatus mutableResponseStatus = new MutableResponseStatus(-1, "unknown status message");
 
         //Modify the part list to create an invalid checksum on one of the parts.

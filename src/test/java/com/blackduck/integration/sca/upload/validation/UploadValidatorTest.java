@@ -16,18 +16,29 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mockito;
 
 import com.blackduck.integration.exception.IntegrationException;
+import com.blackduck.integration.sca.upload.generator.RandomByteContentFileGenerator;
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class UploadValidatorTest {
     private static final Long TEST_MULTIPART_UPLOAD_THRESHOLD = 1024 * 1024 * 5L; //5 MB
-    private final Path uploadFilePath = Path.of("src/test/resources/sample_file_100MB.txt");
     private final String outputDirectory = "build/resources/test/output/";
 
+    private Path generatedSampleFilePath;
     private UploadValidator uploadValidator;
+
+    @BeforeAll
+    void createSampleFile() throws IOException {
+        RandomByteContentFileGenerator randomByteContentFileGenerator = new RandomByteContentFileGenerator();
+        long fileSize = 1024 * 1024 * 15L;
+        generatedSampleFilePath = randomByteContentFileGenerator.generateFile(fileSize, ".txt").orElseThrow(() -> new IOException("Could not generate file"));
+    }
 
     @BeforeEach
     void init() {
@@ -73,7 +84,7 @@ class UploadValidatorTest {
 
     @Test
     void validateUploaderConfigurationTest() throws IntegrationException {
-        uploadValidator.validateUploaderConfiguration(uploadFilePath, UploadValidator.MINIMUM_UPLOAD_CHUNK_SIZE);
+        uploadValidator.validateUploaderConfiguration(generatedSampleFilePath, UploadValidator.MINIMUM_UPLOAD_CHUNK_SIZE);
         assertEquals(0, uploadValidator.getUploadErrors().size());
     }
 
@@ -104,7 +115,7 @@ class UploadValidatorTest {
 
     @Test
     void validateUploadFileTest() {
-        assertDoesNotThrow(() -> uploadValidator.validateUploadFile(uploadFilePath));
+        assertDoesNotThrow(() -> uploadValidator.validateUploadFile(generatedSampleFilePath));
         assertEquals(0, uploadValidator.getUploadErrors().size());
     }
 
