@@ -340,7 +340,8 @@ public class FileUploader {
             }
         } catch (IOException | IntegrationException ex) {
             logger.error("Exception occurred whiling uploading part {}", part);
-            logger.error("Cause: ", ex);
+            logger.error("Cause: {}", ex.getMessage());
+            logger.debug("Cause: ", ex);
         }
         return Optional.empty();
     }
@@ -413,7 +414,8 @@ public class FileUploader {
             }
         } catch (IntegrationException | IOException ex) {
             logger.error("Error canceling upload");
-            logger.error("Cause", ex);
+            logger.error("Cause: {}", ex.getMessage());
+            logger.debug("Cause: ", ex);
         }
         isCanceled = true;
     }
