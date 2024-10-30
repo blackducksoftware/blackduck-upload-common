@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.blackduck.integration.exception.IntegrationException;
+import com.blackduck.integration.exception.IntegrationTimeoutException;
 import com.blackduck.integration.function.ThrowingFunction;
 import com.blackduck.integration.log.IntLogger;
 import com.blackduck.integration.log.Slf4jIntLogger;
@@ -398,5 +399,27 @@ class FileUploaderTestIT {
         assertEquals(20, partsMap.size());
 
         assertThrows(IntegrationException.class, () -> fileUploader.finishMultipartUpload(mutableResponseStatus, startUploadUrl, createBinaryUploadStatusFunction()));
+    }
+
+    @Test
+    void testMultipartUploadTimeOut() throws Exception {
+        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize);
+
+        // Set timeout to 0 minutes to terminate executor service immediately
+        FileUploader fileUploader = new FileUploader(httpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, 0);
+        Map<String, String> startRequestHeaders = Map.of(HttpHeaders.CONTENT_TYPE, ContentTypes.APPLICATION_BINARY_MULTIPART_UPLOAD_START_V1);
+        BinaryMultipartUploadStartRequest uploadStartRequest = new BinaryMultipartUploadStartRequest(metaData.getFileSize(), metaData.getChecksum(), binaryScanRequestData);
+
+        BinaryUploadStatus uploadStatus = fileUploader.multipartUpload(
+            metaData,
+            startRequestHeaders,
+            ContentTypes.APPLICATION_BINARY_MULTIPART_UPLOAD_START_V1,
+            uploadStartRequest,
+            createBinaryUploadStatusFunction(),
+            createUploadStatusErrorFunction()
+        );
+        assertTrue(uploadStatus.isError());
+        IntegrationException ex = uploadStatus.getException().orElseThrow(() -> new IntegrationException("An exception was expected."));
+        assertTrue(ex instanceof IntegrationTimeoutException);
     }
 }

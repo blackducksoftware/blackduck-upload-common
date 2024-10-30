@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.blackduck.integration.exception.IntegrationException;
+import com.blackduck.integration.exception.IntegrationTimeoutException;
 import com.blackduck.integration.function.ThrowingFunction;
 import com.blackduck.integration.rest.HttpMethod;
 import com.blackduck.integration.rest.HttpUrl;
@@ -242,7 +243,9 @@ public class FileUploader {
             // if the timeout occurred cancel the upload.
             if(!success) {
                 logger.error("Upload timed out. Cancelling upload.");
+                logger.debug(partsUploadedString(tagOrderMap.size(), multipartUploadFileMetadata.getFileChunks().size()));
                 cancelUpload(uploadUrl);
+                throw new IntegrationTimeoutException("Executor service timed out.");
             }
             if (isCanceled) {
                 logger.info("Upload was cancelled. Check log for errors.");
@@ -436,13 +439,17 @@ public class FileUploader {
         int actual = uploadedParts.size();
         int expected = multipartUploadFileMetaData.getFileChunks().size();
         if (expected != actual) {
-            String message = String.format(
-                "The number of parts uploaded does not match the number of parts created. Uploaded %d of %d expected parts.",
-                actual,
-                expected
-            );
+            String message = "The number of parts uploaded does not match the number of parts created. " + partsUploadedString(actual, expected);
             logger.error(message);
             throw new IntegrationException("The number of parts uploaded does not match the number of parts uploaded. Expected: " + expected + ", Actual: " + actual);
         }
+    }
+
+    private String partsUploadedString(int actual, int expected) {
+        return String.format(
+            "%d of %d expected parts were uploaded.",
+            actual,
+            expected
+        );
     }
 }
