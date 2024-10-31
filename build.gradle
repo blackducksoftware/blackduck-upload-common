@@ -19,7 +19,7 @@ tasks.compileJava {
 }
 
 group 'com.blackduck.integration'
-version = '4.0.1-SNAPSHOT'
+version = '4.1.0-SNAPSHOT'
 
 apply plugin: 'com.blackduck.integration.library'
 
