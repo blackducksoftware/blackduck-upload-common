@@ -71,6 +71,10 @@ public class UploaderFactory {
         return new ContainerUploader(uploaderConfig.getUploadChunkSize(), createFileUploader(urlPrefix), createUploadValidator());
     }
 
+    public ScassUploader createScassUploader() {
+        return new ScassUploader();
+    }
+
     // TODO: Make public along with uncommenting test when ready
     private ReversingLabUploader createReversingLabUploader(String urlPrefix) {
         return new ReversingLabUploader(uploaderConfig.getUploadChunkSize(), createFileUploader(urlPrefix), createUploadValidator());
