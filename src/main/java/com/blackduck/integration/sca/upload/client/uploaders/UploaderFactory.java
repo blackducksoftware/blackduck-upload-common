@@ -72,7 +72,7 @@ public class UploaderFactory {
     }
 
     public ScassUploader createScassUploader() {
-        return new ScassUploader();
+        return new ScassUploader(intLogger, gson);
     }
 
     // TODO: Make public along with uncommenting test when ready
