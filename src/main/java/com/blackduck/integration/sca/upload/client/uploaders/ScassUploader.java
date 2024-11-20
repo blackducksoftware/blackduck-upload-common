@@ -9,43 +9,58 @@ import java.util.Map;
 
 import org.apache.commons.lang3.mutable.MutableLong;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.apache.http.entity.ByteArrayEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.blackduck.integration.exception.IntegrationException;
-import com.blackduck.integration.log.IntLogger;
 import com.blackduck.integration.rest.HttpMethod;
 import com.blackduck.integration.rest.HttpUrl;
 import com.blackduck.integration.rest.body.EntityBodyContent;
 import com.blackduck.integration.rest.body.FileBodyContent;
 import com.blackduck.integration.rest.client.IntHttpClient;
-import com.blackduck.integration.rest.proxy.ProxyInfo;
 import com.blackduck.integration.rest.request.Request;
 import com.blackduck.integration.rest.response.Response;
 import com.blackduck.integration.sca.upload.file.FileUploader;
 import com.blackduck.integration.sca.upload.rest.status.DefaultUploadStatus;
 import com.blackduck.integration.sca.upload.rest.status.MutableResponseStatus;
 import com.blackduck.integration.sca.upload.rest.status.UploadStatus;
-import com.google.gson.Gson;
+import com.blackduck.integration.sca.upload.validation.UploadValidator;
 
 /**
  * Class to use for uploading files to SCASS
  */
 public class ScassUploader {
 
-    private final static String CONTENT_RANGE_HEADER = "Content-Range";
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    // chunk size is recommended to be multiple of 256 KB. Chunk size around 50 Mb seems to be good compromise between
-    // performance and reliability
-    private final static int CHUNK_SIZE = 262144 * 200;
+    private final static String X_GOOG_RESUMABLE_HEADER = "x-goog-resumable";
+
+    private final static int PERMANENT_REDIRECT = 308;
 
     private final IntHttpClient client;
 
-    public ScassUploader(IntLogger intLogger, Gson gson) {
-        this.client = new IntHttpClient(intLogger, gson, 600, true, ProxyInfo.NO_PROXY_INFO);
+    private final UploadValidator uploadValidator;
+
+    private final int chunkSize;
+
+    private final long multipartUploadPartRetryInitialInterval;
+
+    private final int multipartUploadPartRetryAttempts;
+
+    public ScassUploader(IntHttpClient client, UploadValidator uploadValidator, int chunkSize, long multipartUploadPartRetryInitialInterval,
+            int multipartUploadPartRetryAttempts) {
+        this.client = client;
+        this.uploadValidator = uploadValidator;
+        this.chunkSize = chunkSize;
+        this.multipartUploadPartRetryInitialInterval = multipartUploadPartRetryInitialInterval;
+        this.multipartUploadPartRetryAttempts = multipartUploadPartRetryAttempts;
     }
 
     public UploadStatus upload(String signedUrl, Map<String, String> headers, Path uploadFilePath) throws IntegrationException {
+        validate(uploadFilePath);
 
         HttpUrl requestUrl = new HttpUrl(signedUrl);
 
@@ -75,6 +90,7 @@ public class ScassUploader {
     }
 
     public UploadStatus resumableUpload(String signedUrl, Map<String, String> headers, Path uploadFilePath) throws IOException, IntegrationException {
+        validate(uploadFilePath);
 
         String uploadUrl = initiateResumableUpload(signedUrl, headers);
 
@@ -88,8 +104,8 @@ public class ScassUploader {
             byte[] chunk = new byte[bytesToRead];
             while ((bytesRead = randomAccessFile.read(chunk, 0, bytesToRead)) != -1) {
                 Map<String, String> chunkHeaders = new HashMap<>();
-                String rangeValue = "bytes " + offset + "-" + (offset.getValue() + bytesRead - 1) + "/" + fileSize;
-                chunkHeaders.put(CONTENT_RANGE_HEADER, rangeValue);
+                String rangeValue = String.format("bytes %s-%s/%s", offset, (offset.getValue() + bytesRead - 1), fileSize);
+                chunkHeaders.put(HttpHeaders.CONTENT_RANGE, rangeValue);
 
                 int status = uploadChunk(uploadUrl, chunkHeaders, chunk, offset);
                 if (status == HttpStatus.SC_OK) {
@@ -101,18 +117,25 @@ public class ScassUploader {
                 bytesToRead = computeBytesToRead(fileSize, offset.getValue());
                 chunk = new byte[bytesToRead];
             }
+        } catch (InterruptedException e) {
+            throw new IntegrationException("The thread was interrupted.");
         }
 
         String message = String.format("Resumable upload was successful for the file: %s", uploadFilePath.toAbsolutePath().toString());
         return new DefaultUploadStatus(HttpStatus.SC_OK, message, null);
     }
 
+    private void validate(Path uploadFilePath) throws IntegrationException {
+        uploadValidator.validateUploadFile(uploadFilePath);
+        uploadValidator.validateUploaderConfiguration(uploadFilePath, chunkSize);
+    }
+
     public String initiateResumableUpload(String signedUrl, Map<String, String> headers) throws IOException, IntegrationException {
         HttpUrl requestUrl = new HttpUrl(signedUrl);
 
         Map<String, String> requestHeaders = new HashMap<>(headers);
-        requestHeaders.put("x-goog-resumable", "start");
-        requestHeaders.put("Content-Length", "0");
+        requestHeaders.put(X_GOOG_RESUMABLE_HEADER, "start");
+        requestHeaders.put(HttpHeaders.CONTENT_LENGTH, "0");
 
         Request.Builder builder = new Request.Builder()
                 .url(requestUrl)
@@ -122,7 +145,7 @@ public class ScassUploader {
         Request request = builder.build();
         try (Response response = client.execute(request)) {
             if (response.getStatusCode() == HttpStatus.SC_CREATED) {
-                return response.getHeaders().get("Location"); // This is the resumable session URL
+                return response.getHeaders().get(HttpHeaders.LOCATION); // This is the resumable session URL
             } else {
                 String errorMessage = String.format("Failed to initiate resumable upload. Returned status is %s. Returned status message is %s.",
                         response.getStatusCode(), response.getStatusMessage());
@@ -132,7 +155,8 @@ public class ScassUploader {
         }
     }
 
-    private int uploadChunk(String uploadUrl, Map<String, String> headers, byte[] chunk, MutableLong offset) throws IntegrationException, IOException {
+    private int uploadChunk(String uploadUrl, Map<String, String> headers, byte[] chunk, MutableLong offset)
+            throws IntegrationException, IOException, InterruptedException {
         HttpUrl requestUrl = new HttpUrl(uploadUrl);
         HttpEntity entity = new ByteArrayEntity(chunk);
         EntityBodyContent bodyContent = new EntityBodyContent(entity);
@@ -144,38 +168,64 @@ public class ScassUploader {
                 .bodyContent(bodyContent);
 
         Request request = builder.build();
-        try (Response response = client.execute(request)) {
-            if (response.getStatusCode() == HttpStatus.SC_OK || response.getStatusCode() == HttpStatus.SC_CREATED) {
-                return HttpStatus.SC_OK;
-            } else if (response.getStatusCode() == 308) { // PERMANENT_REDIRECT
-                // Chunk was uploaded successfully, GCS waits for next chunk
-                Map<String, String> responseHeaders = response.getHeaders();
-                String range = responseHeaders.get("Range");
-                if (range != null) {
-                    String[] rangeParts = range.split("-");
-                    // offset should be taken from response, since that indicates the last byte that was really stored in GCS bucket
-                    // offset could be different from previous offset value plus bytesRead - 1
-                    offset.setValue(Long.parseLong(rangeParts[1]) + 1);
+
+        String chunkId = headers.get(HttpHeaders.CONTENT_RANGE);
+        long interval = multipartUploadPartRetryInitialInterval;
+        int retryCount = 0;
+        int status = 0;
+        while (retryCount <= multipartUploadPartRetryAttempts) {
+
+            try (Response response = client.execute(request)) {
+                if (response.getStatusCode() == HttpStatus.SC_OK || response.getStatusCode() == HttpStatus.SC_CREATED) {
+                    status = HttpStatus.SC_OK;
+                    break;
+                } else if (response.getStatusCode() == PERMANENT_REDIRECT) {
+                    // Chunk was uploaded successfully, GCS waits for next chunk
+                    Map<String, String> responseHeaders = response.getHeaders();
+                    String range = responseHeaders.get(HttpHeaders.RANGE);
+                    if (range != null) {
+                        String[] rangeParts = range.split("-");
+                        // offset should be taken from response, since that indicates the last byte that was really stored in GCS bucket
+                        // offset could be different from previous offset value plus bytesRead - 1
+                        offset.setValue(Long.parseLong(rangeParts[1]) + 1);
+                    } else {
+                        throw new IntegrationException(String.format("Response Range was not provided for chunk %s", chunkId));
+                    }
+
+                    status = response.getStatusCode();
+                    break;
                 } else {
-                    throw new IntegrationException(String.format("Response Range was not provided for chunk %s", headers.get(CONTENT_RANGE_HEADER)));
+                    String errorMessage = String.format("Failed to upload chunk %s. Returned status is %s. Returned status message is %s.",
+                            chunkId, response.getStatusCode(), response.getStatusMessage());
+
+                    throw new IntegrationException(errorMessage);
+                }
+            } catch (Exception ex) {
+                logger.error("Exception occurred while uploading chunk {}", chunkId);
+                logger.error("Cause: {}", ex.getMessage());
+                logger.debug("Cause: ", ex);
+
+                if (retryCount >= multipartUploadPartRetryAttempts) {
+                    String errorMessage =
+                            String.format("Failed to upload chunk after %s attempts. Error message is: %s", multipartUploadPartRetryAttempts, ex.getMessage());
+                    throw new IntegrationException(errorMessage);
                 }
 
-                return response.getStatusCode();
-            } else {
-                String errorMessage = String.format("Failed to upload chunk %s. Returned status is %s. Returned status message is %s.",
-                        headers.get(CONTENT_RANGE_HEADER), response.getStatusCode(), response.getStatusMessage());
-
-                throw new IntegrationException(errorMessage);
+                Thread.sleep(interval);
+                interval = 2 * interval;
+                retryCount++;
             }
 
         }
+
+        return status;
     }
 
     private int computeBytesToRead(long fileSize, long offset) {
         long remainingBytes = fileSize - offset;
 
         // safe to cast since remaining bytes are less than chunk size, which is int
-        return remainingBytes < CHUNK_SIZE ? (int) remainingBytes : CHUNK_SIZE;
+        return remainingBytes < chunkSize ? (int) remainingBytes : chunkSize;
     }
 
 }
