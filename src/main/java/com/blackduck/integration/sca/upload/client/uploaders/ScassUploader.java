@@ -59,6 +59,18 @@ public class ScassUploader {
         this.multipartUploadPartRetryAttempts = multipartUploadPartRetryAttempts;
     }
 
+    public UploadStatus upload(HttpMethod method, String signedUrl, Map<String, String> headers, Path uploadFilePath) throws IOException, IntegrationException {
+        if (HttpMethod.POST.equals(method)) {
+            return resumableUpload(signedUrl, headers, uploadFilePath);
+        }
+
+        if (HttpMethod.PUT.equals(method)) {
+            return upload(signedUrl, headers, uploadFilePath);
+        }
+
+        throw new IllegalArgumentException("Http method " + method + " is not supported. Http method must be either POST or PUT");
+    }
+
     public UploadStatus upload(String signedUrl, Map<String, String> headers, Path uploadFilePath) throws IntegrationException {
         validate(uploadFilePath);
 
