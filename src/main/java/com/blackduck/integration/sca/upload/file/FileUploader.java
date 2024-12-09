@@ -32,6 +32,7 @@ import com.blackduck.integration.rest.HttpUrl;
 import com.blackduck.integration.rest.body.BodyContent;
 import com.blackduck.integration.rest.body.EntityBodyContent;
 import com.blackduck.integration.rest.body.StringBodyContent;
+import com.blackduck.integration.rest.exception.IntegrationRestException;
 import com.blackduck.integration.rest.request.Request;
 import com.blackduck.integration.rest.response.Response;
 import com.blackduck.integration.sca.upload.file.model.MultipartUploadFileMetadata;
@@ -292,10 +293,12 @@ public class FileUploader {
                 FileByteRangeInputStream fileByteRangeInputStream = new FileByteRangeInputStream(uploadFile, part.getStartByteRange(), part.getChunkSize())) {
                 EntityBodyContent content = createUploadBodyContent(part, fileByteRangeInputStream);
                 requestBuilder.bodyContent(content);
-                optionalResponse = executeUploadPart(mutableResponseStatus, requestBuilder.build(), part);
+                optionalResponse = executeUploadPart(requestBuilder.build(), part);
             }
             if (optionalResponse.isPresent()) {
                 try (Response response = optionalResponse.get()) {
+                    mutableResponseStatus.setStatusCode(response.getStatusCode());
+                    mutableResponseStatus.setStatusMessage(response.getStatusMessage());
                     if (response.isStatusCodeSuccess()) {
                         tagOrderMap.put(part.getIndex(), part.getTagId().toString());
                         return true;
@@ -327,7 +330,7 @@ public class FileUploader {
         return new EntityBodyContent(entity);
     }
 
-    private Optional<Response> executeUploadPart(MutableResponseStatus mutableResponseStatus, Request request, MultipartUploadFilePart part) {
+    private Optional<Response> executeUploadPart(Request request, MultipartUploadFilePart part) {
         if (isCanceled) {
             logger.debug("Multipart upload has been canceled, not starting upload for part {}, beginning with byte {}.", part.getIndex(), part.getStartByteRange());
             return Optional.empty();
@@ -337,10 +340,10 @@ public class FileUploader {
 
         try {
             try (Response response = httpClient.execute(request)) {
-                mutableResponseStatus.setStatusCode(response.getStatusCode());
-                mutableResponseStatus.setStatusMessage(response.getStatusMessage());
                 return Optional.of(response);
             }
+        } catch (IntegrationRestException ex) {
+            return Optional.of(new FileUploaderResponse(ex));
         } catch (IOException | IntegrationException ex) {
             logger.error("Exception occurred whiling uploading part {}", part);
             logger.error("Cause: {}", ex.getMessage());
