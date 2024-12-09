@@ -22,6 +22,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,9 +32,12 @@ import com.blackduck.integration.function.ThrowingFunction;
 import com.blackduck.integration.log.IntLogger;
 import com.blackduck.integration.log.Slf4jIntLogger;
 import com.blackduck.integration.properties.TestPropertiesManager;
+import com.blackduck.integration.rest.HttpMethod;
 import com.blackduck.integration.rest.HttpUrl;
 import com.blackduck.integration.rest.body.MultipartBodyContent;
+import com.blackduck.integration.rest.exception.IntegrationRestException;
 import com.blackduck.integration.rest.proxy.ProxyInfo;
+import com.blackduck.integration.rest.request.Request;
 import com.blackduck.integration.rest.response.Response;
 import com.blackduck.integration.sca.upload.client.model.BinaryScanRequestData;
 import com.blackduck.integration.sca.upload.file.model.MultipartUploadFileMetadata;
@@ -421,5 +425,43 @@ class FileUploaderTestIT {
         assertTrue(uploadStatus.isError());
         IntegrationException ex = uploadStatus.getException().orElseThrow(() -> new IntegrationException("An exception was expected."));
         assertTrue(ex instanceof IntegrationTimeoutException);
+    }
+
+    @Test
+    void testMultipartUploadRestException() throws Exception {
+        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize);
+        MutableResponseStatus mutableResponseStatus = new MutableResponseStatus(-1, "unknown status message");
+
+        String blackduckUrlString = testPropertiesManager.getRequiredProperty(TestPropertyKey.TEST_BLACKDUCK_URL.getPropertyKey());
+        HttpUrl blackduckUrl = new HttpUrl(blackduckUrlString);
+        IntegrationRestException integrationRestException = new IntegrationRestException(HttpMethod.PUT, blackduckUrl, 412, "Test Failure", "Response content", "Response message");
+        BlackDuckHttpClient spyHttpClient = Mockito.spy(httpClient);
+
+        Mockito.doAnswer(i -> {
+                    Request request = (Request) i.getArguments()[0];
+                    HttpMethod method = request.getMethod();
+                    if (method.equals(HttpMethod.PUT)) {
+                        throw integrationRestException;
+                    } else {
+                        return i.callRealMethod();
+                    }
+                })
+                .when(spyHttpClient)
+                .execute(Mockito.any(Request.class));
+
+        FileUploader fileUploader = new FileUploader(spyHttpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, uploadTimeoutMinutes);
+        BinaryMultipartUploadStartRequest uploadStartRequest = new BinaryMultipartUploadStartRequest(metaData.getFileSize(), metaData.getChecksum(), binaryScanRequestData);
+
+        String startUploadUrl = fileUploader.startMultipartUpload(
+                mutableResponseStatus,
+                Map.of(HttpHeaders.CONTENT_TYPE, ContentTypes.APPLICATION_BINARY_MULTIPART_UPLOAD_START_V1),
+                ContentTypes.APPLICATION_BINARY_MULTIPART_UPLOAD_START_V1,
+                uploadStartRequest
+        );
+
+        Map<Integer, String> partsMap = assertDoesNotThrow(() -> fileUploader.multipartUploadParts(mutableResponseStatus, metaData, startUploadUrl));
+
+        assertEquals(0, partsMap.size());
+        assertEquals(412, mutableResponseStatus.getStatusCode());
     }
 }
