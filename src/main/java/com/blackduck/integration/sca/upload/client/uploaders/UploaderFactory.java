@@ -59,6 +59,17 @@ public class UploaderFactory {
     }
 
     /**
+     * Construct the uploader for BDBA uploads.
+     *
+     * @param urlPrefix
+     *            Used to create {@link UploadRequestPaths}.
+     * @return the {@link BdbaUploader} created.
+     */
+    public BdbaUploader createBdbaUploader(String urlPrefix) {
+        return new BdbaUploader(uploaderConfig.getUploadChunkSize(), createFileUploader(urlPrefix), createUploadValidator());
+    }
+
+    /**
      * Construct the uploader for Binary uploads.
      *
      * @param urlPrefix

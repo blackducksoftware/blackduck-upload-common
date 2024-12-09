@@ -3,21 +3,31 @@
  *
  * Copyright (c) 2024 Black Duck Software, Inc.
  *
- * Use subject to the terms and conditions of the Black Duck Software End User Software License and Maintenance Agreement. All rights reserved worldwide.
+ * Use subject to the terms and conditions of the Black Duck Software End User Software License and Maintenance
+ * Agreement. All rights reserved worldwide.
  */
 package com.blackduck.integration.sca.upload.rest.model;
 
 /**
- * This class contains constants that define the different content types that are sent with the HTTP requests for multipart uploads.
- * These constants are used as the values when the Content-Type header is created for an HTTP request to the Black Duck server for multipart uploads.
+ * This class contains constants that define the different content types that are sent with the HTTP requests for
+ * multipart uploads.
+ * These constants are used as the values when the Content-Type header is created for an HTTP request to the Black Duck
+ * server for multipart uploads.
  */
 public class ContentTypes {
     // Start upload content types.
     /**
      * The content type for starting a multipart upload request to the Black Duck server.
-     * This should be the default content type for starting a multipart upload request if there isn't a specific content type defined for the file type.
+     * This should be the default content type for starting a multipart upload request if there isn't a specific content
+     * type defined for the file type.
      */
     public static final String APPLICATION_MULTIPART_UPLOAD_START_V1 = "application/vnd.blackducksoftware.multipart-upload-start-1+json";
+
+    /**
+     * The content type for performing a standard upload request of a binary or container file to the Black Duck server.
+     */
+    public static final String APPLICATION_BDBA_SCAN_DATA_V1 = "application/vnd.blackducksoftware.bdba-scan-data-1+octet-stream";
+
     /**
      * The content type for starting a multipart upload request of a binary file to the Black Duck server.
      */
@@ -41,5 +51,6 @@ public class ContentTypes {
     public static final String APPLICATION_MULTIPART_UPLOAD_FINISH_V1 = "application/vnd.blackducksoftware.multipart-upload-finish-1+json";
 
     // Make default constructor private so that this class cannot be instantiated since it only contains constants.
-    private ContentTypes() {}
+    private ContentTypes() {
+    }
 }
