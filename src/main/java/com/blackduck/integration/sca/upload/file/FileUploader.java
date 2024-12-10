@@ -37,6 +37,7 @@ import com.blackduck.integration.rest.request.Request;
 import com.blackduck.integration.rest.response.Response;
 import com.blackduck.integration.sca.upload.file.model.MultipartUploadFileMetadata;
 import com.blackduck.integration.sca.upload.file.model.MultipartUploadFilePart;
+import com.blackduck.integration.sca.upload.file.response.UploadPartResponse;
 import com.blackduck.integration.sca.upload.rest.BlackDuckHttpClient;
 import com.blackduck.integration.sca.upload.rest.model.ContentTypes;
 import com.blackduck.integration.sca.upload.rest.model.request.MultipartUploadStartRequest;
@@ -288,29 +289,35 @@ public class FileUploader {
                 }
             }
 
-            Optional<Response> optionalResponse;
+            Optional<UploadPartResponse> optionalPartResponse;
             try (RandomAccessFile uploadFile = new RandomAccessFile(part.getFilePath().toFile(), "r");
                 FileByteRangeInputStream fileByteRangeInputStream = new FileByteRangeInputStream(uploadFile, part.getStartByteRange(), part.getChunkSize())) {
                 EntityBodyContent content = createUploadBodyContent(part, fileByteRangeInputStream);
                 requestBuilder.bodyContent(content);
-                optionalResponse = executeUploadPart(requestBuilder.build(), part);
+                optionalPartResponse = executeUploadPart(requestBuilder.build(), part);
             }
-            if (optionalResponse.isPresent()) {
-                try (Response response = optionalResponse.get()) {
-                    mutableResponseStatus.setStatusCode(response.getStatusCode());
-                    mutableResponseStatus.setStatusMessage(response.getStatusMessage());
-                    if (response.isStatusCodeSuccess()) {
-                        tagOrderMap.put(part.getIndex(), part.getTagId().toString());
-                        return true;
-                    } else if (UploadValidator.MULTIPART_UPLOAD_PART_RETRY_STATUS_CODES.contains(response.getStatusCode())) {
-                        logger.debug("Received {} response code during uploading of part: {}", response.getStatusCode(), response.getStatusMessage());
-                        if (retryCount > 0) {
-                            // Double the retry interval
-                            interval = 2 * interval;
+            if (optionalPartResponse.isPresent()) {
+                UploadPartResponse uploadPartResponse = optionalPartResponse.get();
+                mutableResponseStatus.setStatusCode(uploadPartResponse.getHttpStatusCode());
+                mutableResponseStatus.setStatusMessage(uploadPartResponse.getHttpStatusMessage());
+
+                Optional<Response> optionalResponse = uploadPartResponse.getResponse();
+
+                if (optionalResponse.isPresent()) {
+                    try (Response response = optionalResponse.get()) {
+                        if (response.isStatusCodeSuccess()) {
+                            tagOrderMap.put(part.getIndex(), part.getTagId().toString());
+                            return true;
+                        } else if (UploadValidator.MULTIPART_UPLOAD_PART_RETRY_STATUS_CODES.contains(response.getStatusCode())) {
+                            logger.debug("Received {} response code during uploading of part: {}", response.getStatusCode(), response.getStatusMessage());
+                            if (retryCount > 0) {
+                                // Double the retry interval
+                                interval = 2 * interval;
+                            }
+                        } else {
+                            logger.error("Aborting upload part due to {} status code {}", response.getStatusCode(), response.getStatusMessage());
+                            return false;
                         }
-                    } else {
-                        logger.error("Aborting upload part due to {} status code {}", response.getStatusCode(), response.getStatusMessage());
-                        return false;
                     }
                 }
             } else {
@@ -330,7 +337,7 @@ public class FileUploader {
         return new EntityBodyContent(entity);
     }
 
-    private Optional<Response> executeUploadPart(Request request, MultipartUploadFilePart part) {
+    private Optional<UploadPartResponse> executeUploadPart(Request request, MultipartUploadFilePart part) {
         if (isCanceled) {
             logger.debug("Multipart upload has been canceled, not starting upload for part {}, beginning with byte {}.", part.getIndex(), part.getStartByteRange());
             return Optional.empty();
@@ -340,10 +347,10 @@ public class FileUploader {
 
         try {
             try (Response response = httpClient.execute(request)) {
-                return Optional.of(response);
+                return Optional.of(UploadPartResponse.fromResponse(response));
             }
         } catch (IntegrationRestException ex) {
-            return Optional.of(new IntegrationRestExceptionResponse(ex));
+            return Optional.of(UploadPartResponse.fromException(ex));
         } catch (IOException | IntegrationException ex) {
             logger.error("Exception occurred whiling uploading part {}", part);
             logger.error("Cause: {}", ex.getMessage());
