@@ -69,6 +69,7 @@ class FileUploaderTestIT {
     private BlackDuckHttpClient httpClient;
     private BinaryScanRequestData binaryScanRequestData;
     private Path generatedSampleFilePath;
+    private HttpUrl blackduckUrl;
     // See unit tests for retry
     private int retryAttempts = 0;
     private long retryInitialInterval = 0;
@@ -91,7 +92,7 @@ class FileUploaderTestIT {
 
         String blackduckUrlString = assertDoesNotThrow(()
             -> testPropertiesManager.getRequiredProperty(TestPropertyKey.TEST_BLACKDUCK_URL.getPropertyKey()));
-        HttpUrl blackduckUrl = assertDoesNotThrow(() -> new HttpUrl(blackduckUrlString));
+        blackduckUrl = assertDoesNotThrow(() -> new HttpUrl(blackduckUrlString));
         String blackduckApiToken = assertDoesNotThrow(()
             -> testPropertiesManager.getRequiredProperty(TestPropertyKey.TEST_BLACKDUCK_API_TOKEN.getPropertyKey()));
 
@@ -432,8 +433,6 @@ class FileUploaderTestIT {
         MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize);
         MutableResponseStatus mutableResponseStatus = new MutableResponseStatus(-1, "unknown status message");
 
-        String blackduckUrlString = testPropertiesManager.getRequiredProperty(TestPropertyKey.TEST_BLACKDUCK_URL.getPropertyKey());
-        HttpUrl blackduckUrl = new HttpUrl(blackduckUrlString);
         IntegrationRestException integrationRestException = new IntegrationRestException(HttpMethod.PUT, blackduckUrl, 412, "Test Failure", "Response content", "Response message");
         BlackDuckHttpClient spyHttpClient = Mockito.spy(httpClient);
 
@@ -459,9 +458,62 @@ class FileUploaderTestIT {
                 uploadStartRequest
         );
 
-        Map<Integer, String> partsMap = assertDoesNotThrow(() -> fileUploader.multipartUploadParts(mutableResponseStatus, metaData, startUploadUrl));
+        Map<Integer, String> partsMap = fileUploader.multipartUploadParts(mutableResponseStatus, metaData, startUploadUrl);
 
         assertEquals(0, partsMap.size());
         assertEquals(412, mutableResponseStatus.getStatusCode());
+    }
+
+    @Test
+    void testMultipartUpload429Retry() throws Exception {
+        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize);
+        MutableResponseStatus mutableResponseStatus = new MutableResponseStatus(-1, "unknown status message");
+
+        // Setup 429 exception
+        IntegrationRestException integrationRestException = new IntegrationRestException(HttpMethod.PUT, blackduckUrl, 429, "Forbidden", "Response content", "Response message");
+        AtomicBoolean hasThrownException = new AtomicBoolean(false);
+        BlackDuckHttpClient spyHttpClient = Mockito.spy(httpClient);
+        Mockito.doAnswer(i -> {
+                    Request request = (Request) i.getArguments()[0];
+                    HttpMethod method = request.getMethod();
+                    if (!hasThrownException.get() && method.equals(HttpMethod.PUT)) {
+                        hasThrownException.set(true);
+                        throw integrationRestException;
+                    } else {
+                        return i.callRealMethod();
+                    }
+                })
+                .when(spyHttpClient)
+                .execute(Mockito.any(Request.class));
+
+        // Setup upload
+        FileUploader fileUploader = new FileUploader(spyHttpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, uploadTimeoutMinutes);
+        BinaryMultipartUploadStartRequest uploadStartRequest = new BinaryMultipartUploadStartRequest(metaData.getFileSize(), metaData.getChecksum(), binaryScanRequestData);
+
+        // Start upload
+        String startUploadUrl = fileUploader.startMultipartUpload(
+                mutableResponseStatus,
+                Map.of(HttpHeaders.CONTENT_TYPE, ContentTypes.APPLICATION_BINARY_MULTIPART_UPLOAD_START_V1),
+                ContentTypes.APPLICATION_BINARY_MULTIPART_UPLOAD_START_V1,
+                uploadStartRequest
+        );
+
+        // Upload parts
+        Map<Integer, String> partsMap = fileUploader.multipartUploadParts(mutableResponseStatus, metaData, startUploadUrl);
+        assertEquals(20, partsMap.size());
+
+        // Finish upload
+        BinaryUploadStatus uploadStatus = fileUploader.finishMultipartUpload(mutableResponseStatus, startUploadUrl, createBinaryUploadStatusFunction());
+
+        // Verify 429 thrown
+        assertTrue(hasThrownException.get());
+
+        // Verify upload
+        assertFalse(uploadStatus.isError());
+        assertTrue(uploadStatus.hasContent());
+        BinaryFinishResponseContent binaryFinishResponseContent = uploadStatus.getResponseContent()
+                .orElseThrow(() -> new AssertionError("Could not get response content when it was expected."));
+        assertNotNull(binaryFinishResponseContent.getETag());
+        assertNotNull(binaryFinishResponseContent.getLocation());
     }
 }
