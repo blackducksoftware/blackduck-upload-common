@@ -2,10 +2,8 @@ package com.blackduck.integration.sca.upload.file;
 
 import java.io.InputStream;
 import java.nio.charset.Charset;
-import java.util.Collections;
 import java.util.Map;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
 
@@ -22,7 +20,7 @@ public class FileUploaderResponse implements Response {
 
     @Override
     public HttpUriRequest getRequest() {
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -47,7 +45,7 @@ public class FileUploaderResponse implements Response {
 
     @Override
     public InputStream getContent() {
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -57,37 +55,37 @@ public class FileUploaderResponse implements Response {
 
     @Override
     public String getContentString(Charset encoding) {
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Long getContentLength() {
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public String getContentEncoding() {
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public String getContentType() {
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Map<String, String> getHeaders() {
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public String getHeaderValue(String name) {
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public CloseableHttpResponse getActualResponse() {
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -98,7 +96,7 @@ public class FileUploaderResponse implements Response {
 
     @Override
     public long getLastModified() {
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException();
     }
 
     @Override
