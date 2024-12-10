@@ -11,10 +11,10 @@ import com.blackduck.integration.rest.RestConstants;
 import com.blackduck.integration.rest.exception.IntegrationRestException;
 import com.blackduck.integration.rest.response.Response;
 
-public class FileUploaderResponse implements Response {
+public class IntegrationRestExceptionResponse implements Response {
     private final IntegrationRestException integrationRestException;
 
-    public FileUploaderResponse(IntegrationRestException integrationRestException) {
+    public IntegrationRestExceptionResponse(IntegrationRestException integrationRestException) {
         this.integrationRestException = integrationRestException;
     }
 

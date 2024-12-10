@@ -343,7 +343,7 @@ public class FileUploader {
                 return Optional.of(response);
             }
         } catch (IntegrationRestException ex) {
-            return Optional.of(new FileUploaderResponse(ex));
+            return Optional.of(new IntegrationRestExceptionResponse(ex));
         } catch (IOException | IntegrationException ex) {
             logger.error("Exception occurred whiling uploading part {}", part);
             logger.error("Cause: {}", ex.getMessage());
