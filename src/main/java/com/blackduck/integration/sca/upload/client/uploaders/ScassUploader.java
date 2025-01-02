@@ -101,7 +101,7 @@ public class ScassUploader {
         }
     }
 
-    public UploadStatus resumableUpload(String signedUrl, Map<String, String> headers, Path uploadFilePath) throws IOException, IntegrationException {
+    private UploadStatus resumableUpload(String signedUrl, Map<String, String> headers, Path uploadFilePath) throws IOException, IntegrationException {
         validate(uploadFilePath);
 
         String uploadUrl = initiateResumableUpload(signedUrl, headers);
@@ -142,7 +142,7 @@ public class ScassUploader {
         uploadValidator.validateUploaderConfiguration(uploadFilePath, chunkSize);
     }
 
-    public String initiateResumableUpload(String signedUrl, Map<String, String> headers) throws IOException, IntegrationException {
+    private String initiateResumableUpload(String signedUrl, Map<String, String> headers) throws IOException, IntegrationException {
         HttpUrl requestUrl = new HttpUrl(signedUrl);
 
         Map<String, String> requestHeaders = new HashMap<>(headers);
