@@ -23,10 +23,7 @@ import com.blackduck.integration.rest.body.FileBodyContent;
 import com.blackduck.integration.rest.client.IntHttpClient;
 import com.blackduck.integration.rest.request.Request;
 import com.blackduck.integration.rest.response.Response;
-import com.blackduck.integration.sca.upload.file.FileUploader;
-import com.blackduck.integration.sca.upload.rest.status.DefaultUploadStatus;
-import com.blackduck.integration.sca.upload.rest.status.MutableResponseStatus;
-import com.blackduck.integration.sca.upload.rest.status.UploadStatus;
+import com.blackduck.integration.sca.upload.rest.status.ScassUploadStatus;
 import com.blackduck.integration.sca.upload.validation.UploadValidator;
 
 /**
@@ -34,11 +31,11 @@ import com.blackduck.integration.sca.upload.validation.UploadValidator;
  */
 public class ScassUploader {
 
+    public final static int PERMANENT_REDIRECT = 308;
+
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final static String X_GOOG_RESUMABLE_HEADER = "x-goog-resumable";
-
-    private final static int PERMANENT_REDIRECT = 308;
 
     private final IntHttpClient client;
 
@@ -59,7 +56,10 @@ public class ScassUploader {
         this.multipartUploadPartRetryAttempts = multipartUploadPartRetryAttempts;
     }
 
-    public UploadStatus upload(HttpMethod method, String signedUrl, Map<String, String> headers, Path uploadFilePath) throws IOException, IntegrationException {
+    public ScassUploadStatus upload(HttpMethod method, String signedUrl, Map<String, String> headers, Path uploadFilePath)
+            throws IOException, IntegrationException {
+        validate(uploadFilePath);
+
         if (HttpMethod.POST.equals(method)) {
             return resumableUpload(signedUrl, headers, uploadFilePath);
         }
@@ -71,8 +71,7 @@ public class ScassUploader {
         throw new IllegalArgumentException("Http method " + method + " is not supported. Http method must be either POST or PUT");
     }
 
-    public UploadStatus upload(String signedUrl, Map<String, String> headers, Path uploadFilePath) throws IntegrationException {
-        validate(uploadFilePath);
+    private ScassUploadStatus upload(String signedUrl, Map<String, String> headers, Path uploadFilePath) throws IOException, IntegrationException {
 
         HttpUrl requestUrl = new HttpUrl(signedUrl);
 
@@ -84,27 +83,43 @@ public class ScassUploader {
                 .bodyContent(bodyContent);
 
         Request request = builder.build();
-        MutableResponseStatus mutableResponseStatus = new MutableResponseStatus(-1, "unknown status");
-        try (Response response = client.execute(request)) {
-            mutableResponseStatus.setStatusCode(response.getStatusCode());
-            mutableResponseStatus.setStatusMessage(response.getStatusMessage());
+        Response response = null;
+        try {
+            response = client.execute(request);
             // Handle errors
             client.throwExceptionForError(response);
 
             int statusCode = response.getStatusCode();
             String statusMessage = response.getStatusMessage();
+            String content = response.getContentString();
 
-            return new DefaultUploadStatus(statusCode, statusMessage, null);
-        } catch (IOException | IntegrationException ex) {
-            return new DefaultUploadStatus(mutableResponseStatus.getStatusCode(), mutableResponseStatus.getStatusMessage(),
-                    new IntegrationException(FileUploader.CLOSE_RESPONSE_OBJECT_MESSAGE + ex.getCause(), ex));
+            return new ScassUploadStatus(statusCode, statusMessage, null, content);
+        } catch (IntegrationException ex) {
+            int statusCode = (response == null) ? -1 : response.getStatusCode();
+            String statusMessage = (response == null) ? "unknown status" : response.getStatusMessage();
+            String content = (response == null) ? null : response.getContentString();
+
+            return new ScassUploadStatus(statusCode, statusMessage, ex, content);
+        } finally {
+            if (response != null) {
+                response.close();
+            }
         }
     }
 
-    private UploadStatus resumableUpload(String signedUrl, Map<String, String> headers, Path uploadFilePath) throws IOException, IntegrationException {
-        validate(uploadFilePath);
+    private ScassUploadStatus resumableUpload(String signedUrl, Map<String, String> headers, Path uploadFilePath) throws IOException, IntegrationException {
+        String uploadUrl = null;
+        try (Response response = initiateResumableUpload(signedUrl, headers)) {
+            if (response.getStatusCode() == HttpStatus.SC_CREATED) {
+                uploadUrl = response.getHeaders().get(HttpHeaders.LOCATION); // This is the resumable session URL
+            } else {
+                String errorMessage = String.format("Failed to initiate resumable upload. Returned status is %s. Returned status message is %s.",
+                        response.getStatusCode(), response.getStatusMessage());
 
-        String uploadUrl = initiateResumableUpload(signedUrl, headers);
+                return new ScassUploadStatus(response.getStatusCode(), response.getStatusMessage(), new IntegrationException(errorMessage),
+                        response.getContentString());
+            }
+        }
 
         File file = uploadFilePath.toFile();
         long fileSize = file.length();
@@ -112,6 +127,7 @@ public class ScassUploader {
         int bytesToRead = computeBytesToRead(fileSize, 0);
 
         int bytesRead;
+
         try (RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r")) {
             byte[] chunk = new byte[bytesToRead];
             while ((bytesRead = randomAccessFile.read(chunk, 0, bytesToRead)) != -1) {
@@ -119,8 +135,14 @@ public class ScassUploader {
                 String rangeValue = String.format("bytes %s-%s/%s", offset, (offset.getValue() + bytesRead - 1), fileSize);
                 chunkHeaders.put(HttpHeaders.CONTENT_RANGE, rangeValue);
 
-                int status = uploadChunk(uploadUrl, chunkHeaders, chunk, offset);
-                if (status == HttpStatus.SC_OK) {
+                ScassUploadStatus status = uploadChunk(uploadUrl, chunkHeaders, chunk, offset);
+                if (status.getStatusCode() != HttpStatus.SC_OK && status.getStatusCode() != PERMANENT_REDIRECT) {
+                    // this is error status, so break the cycle and return it
+                    return status;
+                }
+
+                if (status.getStatusCode() == HttpStatus.SC_OK) {
+                    // this was last chunk and it was uploaded successfully
                     break;
                 }
 
@@ -134,7 +156,7 @@ public class ScassUploader {
         }
 
         String message = String.format("Resumable upload was successful for the file: %s", uploadFilePath.toAbsolutePath().toString());
-        return new DefaultUploadStatus(HttpStatus.SC_OK, message, null);
+        return new ScassUploadStatus(HttpStatus.SC_OK, message, null, null);
     }
 
     private void validate(Path uploadFilePath) throws IntegrationException {
@@ -142,7 +164,7 @@ public class ScassUploader {
         uploadValidator.validateUploaderConfiguration(uploadFilePath, chunkSize);
     }
 
-    private String initiateResumableUpload(String signedUrl, Map<String, String> headers) throws IOException, IntegrationException {
+    private Response initiateResumableUpload(String signedUrl, Map<String, String> headers) throws IOException, IntegrationException {
         HttpUrl requestUrl = new HttpUrl(signedUrl);
 
         Map<String, String> requestHeaders = new HashMap<>(headers);
@@ -155,19 +177,10 @@ public class ScassUploader {
                 .method(HttpMethod.POST);
 
         Request request = builder.build();
-        try (Response response = client.execute(request)) {
-            if (response.getStatusCode() == HttpStatus.SC_CREATED) {
-                return response.getHeaders().get(HttpHeaders.LOCATION); // This is the resumable session URL
-            } else {
-                String errorMessage = String.format("Failed to initiate resumable upload. Returned status is %s. Returned status message is %s.",
-                        response.getStatusCode(), response.getStatusMessage());
-
-                throw new IntegrationException(errorMessage);
-            }
-        }
+        return client.execute(request);
     }
 
-    private int uploadChunk(String uploadUrl, Map<String, String> headers, byte[] chunk, MutableLong offset)
+    private ScassUploadStatus uploadChunk(String uploadUrl, Map<String, String> headers, byte[] chunk, MutableLong offset)
             throws IntegrationException, IOException, InterruptedException {
         HttpUrl requestUrl = new HttpUrl(uploadUrl);
         HttpEntity entity = new ByteArrayEntity(chunk);
@@ -184,13 +197,13 @@ public class ScassUploader {
         String chunkId = headers.get(HttpHeaders.CONTENT_RANGE);
         long interval = multipartUploadPartRetryInitialInterval;
         int retryCount = 0;
-        int status = 0;
         while (retryCount <= multipartUploadPartRetryAttempts) {
 
-            try (Response response = client.execute(request)) {
+            Response response = null;
+            try {
+                response = client.execute(request);
                 if (response.getStatusCode() == HttpStatus.SC_OK || response.getStatusCode() == HttpStatus.SC_CREATED) {
-                    status = HttpStatus.SC_OK;
-                    break;
+                    return new ScassUploadStatus(HttpStatus.SC_OK, null, null, null);
                 } else if (response.getStatusCode() == PERMANENT_REDIRECT) {
                     // Chunk was uploaded successfully, GCS waits for next chunk
                     Map<String, String> responseHeaders = response.getHeaders();
@@ -204,8 +217,7 @@ public class ScassUploader {
                         throw new IntegrationException(String.format("Response Range was not provided for chunk %s", chunkId));
                     }
 
-                    status = response.getStatusCode();
-                    break;
+                    return new ScassUploadStatus(PERMANENT_REDIRECT, null, null, null);
                 } else {
                     String errorMessage = String.format("Failed to upload chunk %s. Returned status is %s. Returned status message is %s.",
                             chunkId, response.getStatusCode(), response.getStatusMessage());
@@ -213,24 +225,31 @@ public class ScassUploader {
                     throw new IntegrationException(errorMessage);
                 }
             } catch (Exception ex) {
-                logger.error("Exception occurred while uploading chunk {}", chunkId);
-                logger.error("Cause: {}", ex.getMessage());
-                logger.debug("Cause: ", ex);
+                logger.error("Error occurred while uploading chunk {}", chunkId);
 
                 if (retryCount >= multipartUploadPartRetryAttempts) {
                     String errorMessage =
                             String.format("Failed to upload chunk after %s attempts. Error message is: %s", multipartUploadPartRetryAttempts, ex.getMessage());
-                    throw new IntegrationException(errorMessage);
+                    if (response != null) {
+                        return new ScassUploadStatus(response.getStatusCode(), response.getStatusMessage(), new IntegrationException(errorMessage, ex),
+                                response.getContentString());
+                    } else {
+                        return new ScassUploadStatus(-1, null, new IntegrationException(errorMessage, ex), null);
+                    }
                 }
 
                 Thread.sleep(interval);
                 interval = 2 * interval;
                 retryCount++;
+            } finally {
+                if (response != null) {
+                    response.close();
+                }
             }
 
         }
 
-        return status;
+        return new ScassUploadStatus(-1, null, null, null);
     }
 
     private int computeBytesToRead(long fileSize, long offset) {
