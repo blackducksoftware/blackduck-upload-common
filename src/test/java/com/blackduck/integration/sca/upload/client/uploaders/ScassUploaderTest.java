@@ -68,7 +68,8 @@ public class ScassUploaderTest {
         MockitoAnnotations.openMocks(this);
 
         scassUploader = new ScassUploader(client, uploadValidator, CHUNK_SIZE, MULTIPART_UPLOAD_PART_RETRY_INITIAL_INTERVAL,
-                MULTIPART_UPLOAD_PART_RETRY_ATTEMPTS);
+            MULTIPART_UPLOAD_PART_RETRY_ATTEMPTS
+        );
     }
 
     @Test

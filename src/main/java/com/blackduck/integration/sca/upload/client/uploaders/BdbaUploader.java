@@ -34,7 +34,6 @@ import com.blackduck.integration.sca.upload.validation.UploadValidator;
 
 /**
  * Uploader implementation for BDBA uploads.
- *
  * @see UploadStatus
  * @see FileUploader
  * @see UploadValidator
@@ -43,13 +42,9 @@ public class BdbaUploader extends AbstractUploader<DefaultUploadStatus> {
 
     /**
      * Constructor for BDBA uploads.
-     *
-     * @param chunkSize
-     *            The maximum size per chunk for a multipart upload.
-     * @param fileUploader
-     *            The class which uploads the file to the Black Duck server.
-     * @param uploadValidator
-     *            The class that provides validation for file splitting and uploader configuration.
+     * @param chunkSize       The maximum size per chunk for a multipart upload.
+     * @param fileUploader    The class which uploads the file to the Black Duck server.
+     * @param uploadValidator The class that provides validation for file splitting and uploader configuration.
      */
     BdbaUploader(int chunkSize, FileUploader fileUploader, UploadValidator uploadValidator) {
         super(chunkSize, fileUploader, uploadValidator);
@@ -57,9 +52,7 @@ public class BdbaUploader extends AbstractUploader<DefaultUploadStatus> {
 
     /**
      * Construct the body content for the BDBA HTTP request body for a standard upload.
-     *
-     * @param filePath
-     *            The path to the file being uploaded.
+     * @param filePath The path to the file being uploaded.
      * @return the {@link BodyContent} used for upload.
      */
     @Override
@@ -70,7 +63,6 @@ public class BdbaUploader extends AbstractUploader<DefaultUploadStatus> {
 
     /**
      * Retrieve the HTTP request headers used for starting BDBA multipart upload requests.
-     *
      * @return a map of HTTP request headers.
      */
     @Override
@@ -82,7 +74,6 @@ public class BdbaUploader extends AbstractUploader<DefaultUploadStatus> {
 
     /**
      * Retrieve the Content-Type for the multipart BDBA upload start requests.
-     *
      * @return the Content-Type for BDBA upload start requests.
      */
     @Override
@@ -93,12 +84,10 @@ public class BdbaUploader extends AbstractUploader<DefaultUploadStatus> {
     /**
      * Retrieve the body content for a BDBA HTTP multipart upload start request.
      * This is serialized as JSON to the Black Duck server.
-     *
+     * @param uploadFileMetaDataSupplier The supplier of metadata used to create a start request.
+     * @return the multipart start request body content.
      * @see MultipartUploadStartRequest
      * @see MultipartUploadFileMetadata
-     * @param uploadFileMetaDataSupplier
-     *            The supplier of metadata used to create a start request.
-     * @return the multipart start request body content.
      */
     @Override
     protected MultipartUploadStartRequest getMultipartUploadStartRequest(Supplier<MultipartUploadFileMetadata> uploadFileMetaDataSupplier) {
@@ -108,9 +97,8 @@ public class BdbaUploader extends AbstractUploader<DefaultUploadStatus> {
 
     /**
      * Construct the status object for a BDBA upload either containing content or error status.
-     *
-     * @see UploadStatus
      * @return a function that produces the {@link UploadStatus} or throws an exception.
+     * @see UploadStatus
      */
     @Override
     protected ThrowingFunction<Response, DefaultUploadStatus, IntegrationException> createUploadStatus() {
@@ -123,9 +111,8 @@ public class BdbaUploader extends AbstractUploader<DefaultUploadStatus> {
 
     /**
      * Construct the status when a BDBA upload error occurs.
-     *
-     * @see UploadStatus
      * @return a function that produces the {@link UploadStatus} when an error has occurred.
+     * @see UploadStatus
      */
     @Override
     protected BiFunction<MutableResponseStatus, IntegrationException, DefaultUploadStatus> createUploadStatusError() {

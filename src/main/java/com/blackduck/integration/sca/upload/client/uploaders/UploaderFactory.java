@@ -22,12 +22,13 @@ import com.google.gson.Gson;
 
 /**
  * Factory class to create needed uploader.
- *
  * @see UploaderConfig
  * @see ArtifactsUploader
+ * @see BdbaUploader
  * @see BinaryUploader
  * @see ContainerUploader
  * @see ReversingLabUploader
+ * @see ScassUploader
  * @see ToolsUploader
  */
 public class UploaderFactory {
@@ -39,13 +40,9 @@ public class UploaderFactory {
 
     /**
      * Constructor for creating a specified uploader.
-     *
-     * @param uploaderConfig
-     *            The configuration needed for multipart uploads.
-     * @param intLogger
-     *            The {@link IntLogger} to log messages from the HTTP requests.
-     * @param gson
-     *            The object to serialize/deserialize data to and from JSON.
+     * @param uploaderConfig The configuration needed for multipart uploads.
+     * @param intLogger      The {@link IntLogger} to log messages from the HTTP requests.
+     * @param gson           The object to serialize/deserialize data to and from JSON.
      */
     public UploaderFactory(UploaderConfig uploaderConfig, IntLogger intLogger, Gson gson) {
         this.uploaderConfig = uploaderConfig;
@@ -60,9 +57,7 @@ public class UploaderFactory {
 
     /**
      * Construct the uploader for BDBA uploads.
-     *
-     * @param urlPrefix
-     *            Used to create {@link UploadRequestPaths}.
+     * @param urlPrefix Used to create {@link UploadRequestPaths}.
      * @return the {@link BdbaUploader} created.
      */
     public BdbaUploader createBdbaUploader(String urlPrefix) {
@@ -71,11 +66,8 @@ public class UploaderFactory {
 
     /**
      * Construct the uploader for Binary uploads.
-     *
-     * @param urlPrefix
-     *            Used to create {@link UploadRequestPaths}.
-     * @param binaryScanRequestData
-     *            Object needed to initiate a binary scan request.
+     * @param urlPrefix             Used to create {@link UploadRequestPaths}.
+     * @param binaryScanRequestData Object needed to initiate a binary scan request.
      * @return the {@link BinaryUploader} created.
      */
     public BinaryUploader createBinaryUploader(String urlPrefix, BinaryScanRequestData binaryScanRequestData) {
@@ -84,9 +76,7 @@ public class UploaderFactory {
 
     /**
      * Construct the uploader for Container uploads.
-     *
-     * @param urlPrefix
-     *            Used to create {@link UploadRequestPaths}.
+     * @param urlPrefix Used to create {@link UploadRequestPaths}.
      * @return the {@link ContainerUploader} created.
      */
     public ContainerUploader createContainerUploader(String urlPrefix) {
@@ -95,14 +85,14 @@ public class UploaderFactory {
 
     /**
      * Construct the uploader for SCASS uploads.
-     *
-     * @return
+     * @return the {@link ScassUploader} created.
      */
     public ScassUploader createScassUploader() {
         return new ScassUploader(createScassHttpClient(), createUploadValidator(),
-                uploaderConfig.getUploadChunkSize(),
-                uploaderConfig.getMultipartUploadPartRetryInitialInterval(),
-                uploaderConfig.getMultipartUploadPartRetryAttempts());
+            uploaderConfig.getUploadChunkSize(),
+            uploaderConfig.getMultipartUploadPartRetryInitialInterval(),
+            uploaderConfig.getMultipartUploadPartRetryAttempts()
+        );
     }
 
     // TODO: Make public along with uncommenting test when ready
@@ -117,31 +107,34 @@ public class UploaderFactory {
 
     private FileUploader createFileUploader(String urlPrefix) {
         return new FileUploader(
-                createHttpClient(),
-                createUploadRequestPaths(urlPrefix),
-                uploaderConfig.getMultipartUploadPartRetryAttempts(),
-                uploaderConfig.getMultipartUploadPartRetryInitialInterval(),
-                uploaderConfig.getMultipartUploadTimeoutInMinutes());
+            createHttpClient(),
+            createUploadRequestPaths(urlPrefix),
+            uploaderConfig.getMultipartUploadPartRetryAttempts(),
+            uploaderConfig.getMultipartUploadPartRetryInitialInterval(),
+            uploaderConfig.getMultipartUploadTimeoutInMinutes()
+        );
     }
 
     private BlackDuckHttpClient createHttpClient() {
         return new BlackDuckHttpClient(
-                intLogger,
-                gson,
-                uploaderConfig.getBlackDuckTimeoutInSeconds(),
-                uploaderConfig.isAlwaysTrustServerCertificate(),
-                uploaderConfig.getProxyInfo(),
-                uploaderConfig.getBlackDuckUrl(),
-                uploaderConfig.getApiToken());
+            intLogger,
+            gson,
+            uploaderConfig.getBlackDuckTimeoutInSeconds(),
+            uploaderConfig.isAlwaysTrustServerCertificate(),
+            uploaderConfig.getProxyInfo(),
+            uploaderConfig.getBlackDuckUrl(),
+            uploaderConfig.getApiToken()
+        );
     }
 
     private IntHttpClient createScassHttpClient() {
         return new IntHttpClient(
-                intLogger,
-                gson,
-                uploaderConfig.getBlackDuckTimeoutInSeconds(),
-                uploaderConfig.isAlwaysTrustServerCertificate(),
-                ProxyInfo.NO_PROXY_INFO);
+            intLogger,
+            gson,
+            uploaderConfig.getBlackDuckTimeoutInSeconds(),
+            uploaderConfig.isAlwaysTrustServerCertificate(),
+            ProxyInfo.NO_PROXY_INFO
+        );
     }
 
     private UploadRequestPaths createUploadRequestPaths(String urlPrefix) {

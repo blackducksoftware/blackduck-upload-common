@@ -16,7 +16,6 @@ import com.blackduck.integration.exception.IntegrationException;
 
 /**
  * Class that represents the overall status of a file upload to SCASS.
- *
  * @see UploadStatus
  */
 public class ScassUploadStatus extends UploadStatus {
@@ -25,8 +24,10 @@ public class ScassUploadStatus extends UploadStatus {
 
     private String content;
 
-    public ScassUploadStatus(int statusCode, String statusMessage, @Nullable IntegrationException exception,
-            String content) {
+    public ScassUploadStatus(
+        int statusCode, String statusMessage, @Nullable IntegrationException exception,
+        String content
+    ) {
         super(statusCode, statusMessage, exception);
         this.content = content;
     }
