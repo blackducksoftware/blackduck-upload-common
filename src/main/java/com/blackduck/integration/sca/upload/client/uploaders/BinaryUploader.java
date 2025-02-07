@@ -136,7 +136,12 @@ public class BinaryUploader extends AbstractUploader<BinaryUploadStatus> {
 
             Map<String, String> responseHeaders = response.getHeaders();
             String location = Optional.ofNullable(responseHeaders.get(HttpHeaders.LOCATION)).orElseThrow(() -> new IntegrationException("Could not find Location header."));
-            String eTag = Optional.ofNullable(responseHeaders.get(HttpHeaders.ETAG)).orElseThrow(() -> new IntegrationException("Could not find Etag header."));
+            String eTag = responseHeaders.entrySet().stream()
+                .filter(entry -> entry.getKey().equalsIgnoreCase(HttpHeaders.ETAG))
+                .map(Map.Entry::getValue)
+                .findFirst()
+                .orElseThrow(() -> new IntegrationException("Could not find ETag header."));
+
             BinaryFinishResponseContent binaryFinishResponseContent = new BinaryFinishResponseContent(location, eTag);
 
             return new BinaryUploadStatus(statusCode, statusMessage, null, binaryFinishResponseContent);
