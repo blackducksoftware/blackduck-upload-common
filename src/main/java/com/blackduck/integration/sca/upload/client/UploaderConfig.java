@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections.CollectionUtils;
@@ -41,6 +43,7 @@ public class UploaderConfig {
     private final int multipartUploadPartRetryAttempts;
     private final long multipartUploadPartRetryInitialInterval;
     private final int multipartUploadTimeoutInMinutes;
+    private final ExecutorService executorService;
 
     /**
      * Static constructor to instantiate Builder using just {@link ProxyInfo}.
@@ -123,7 +126,8 @@ public class UploaderConfig {
         Long multipartUploadThreshold,
         int multipartUploadPartRetryAttempts,
         long multipartUploadPartRetryInitialInterval,
-        int multipartUploadTimeoutInMinutes
+        int multipartUploadTimeoutInMinutes,
+        ExecutorService executorService
     ) {
         this.proxyInfo = proxyInfo;
         this.uploadChunkSize = uploadChunkSize;
@@ -135,6 +139,7 @@ public class UploaderConfig {
         this.multipartUploadPartRetryAttempts = multipartUploadPartRetryAttempts;
         this.multipartUploadPartRetryInitialInterval = multipartUploadPartRetryInitialInterval;
         this.multipartUploadTimeoutInMinutes = multipartUploadTimeoutInMinutes;
+        this.executorService = executorService;
     }
 
     /**
@@ -227,16 +232,26 @@ public class UploaderConfig {
         return multipartUploadTimeoutInMinutes;
     }
 
+    /** Retrieve the executor service to upload the parts of a multipart upload.
+     *
+     * @return The executor service to handle uploading parts of the file.
+     */
+    public ExecutorService getExecutorService() {
+        return executorService;
+    }
+
     /**
      * Builder class used to validate and create an instance of {@link UploaderConfig}.
      */
     public static class Builder {
         ProxyInfo proxyInfo;
         PropertiesManager propertiesManager;
+        ExecutorService executorService;
 
         private Builder(ProxyInfo proxyInfo, PropertiesManager propertiesManager) {
             this.proxyInfo = proxyInfo;
             this.propertiesManager = propertiesManager;
+            singleThreadExecutorService();
         }
 
         /**
@@ -260,7 +275,8 @@ public class UploaderConfig {
                 getMultipartUploadThreshold(),
                 getMultipartUploadPartRetryAttempts(),
                 getMultipartUploadPartRetryInitialInterval(),
-                getMultipartUploadTimeoutInMinutes()
+                getMultipartUploadTimeoutInMinutes(),
+                executorService
             );
         }
 
@@ -531,6 +547,19 @@ public class UploaderConfig {
 
         public Builder setMultipartUploadTimeoutInMinutes(Integer multipartUploadTimeoutInMinutes) {
             setPropertyValue(EnvironmentProperties.BLACKDUCK_MULTIPART_UPLOAD_TIMEOUT_MINUTES, String.valueOf(multipartUploadTimeoutInMinutes));
+            return this;
+        }
+
+        public Builder singleThreadExecutorService() {
+            return executorService(Executors.newSingleThreadExecutor());
+        }
+
+        public Builder defaultMultithreadedExecutorService() {
+            return executorService(Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()));
+        }
+
+        public Builder executorService(ExecutorService executorService) {
+            this.executorService = executorService;
             return this;
         }
     }

@@ -37,7 +37,7 @@ import com.blackduck.integration.sca.upload.validation.UploadValidator;
 import com.google.gson.Gson;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class FileUploaderTest {
+class DefaultFileUploaderTest {
     private static final TestPropertiesManager testPropertiesManager = TestPropertyKey.getPropertiesManager();
     private static final int CHUNK_SIZE = 1024 * 1024 * 5; // 5MB
 
@@ -72,7 +72,7 @@ class FileUploaderTest {
     void testMultipartUploadPartsRetryFails() throws Exception {
         chainFailureResponses(1);
         // Set retry attempts to 0
-        FileUploader fileUploader = new FileUploader(mockHttpClient, uploadRequestPaths, 0, 0, 10);
+        DefaultFileUploader fileUploader = new DefaultFileUploader(mockHttpClient, uploadRequestPaths, 0, 0, 10);
         Map<Integer, String> partsMap = fileUploader.multipartUploadParts(mutableResponseStatus, metaData, "https://invalid");
         // All parts fail when one failed
         assertEquals(0, partsMap.size());
@@ -87,7 +87,7 @@ class FileUploaderTest {
         // Retry for all retryable status codes
         Mockito.when(mockFailureResponse.getStatusCode()).thenReturn(statusCode);
         // Set retry attempts
-        FileUploader fileUploader = new FileUploader(mockHttpClient, uploadRequestPaths, 1, 0, 10);
+        DefaultFileUploader fileUploader = new DefaultFileUploader(mockHttpClient, uploadRequestPaths, 1, 0, 10);
         Map<Integer, String> partsMap = fileUploader.multipartUploadParts(mutableResponseStatus, metaData, "https://invalid");
         // All parts returns
         assertEquals(20, partsMap.size());
@@ -103,7 +103,7 @@ class FileUploaderTest {
         // Retry for all retryable status codes
         Mockito.when(mockFailureResponse.getStatusCode()).thenReturn(HttpStatus.SC_GATEWAY_TIMEOUT);
         // Set retry attempts to 50
-        FileUploader fileUploader = new FileUploader(mockHttpClient, uploadRequestPaths, 50, 0, 10);
+        DefaultFileUploader fileUploader = new DefaultFileUploader(mockHttpClient, uploadRequestPaths, 50, 0, 10);
         Map<Integer, String> partsMap = fileUploader.multipartUploadParts(mutableResponseStatus, metaData, "https://invalid");
         // All parts returns
         assertEquals(20, partsMap.size());
@@ -121,7 +121,7 @@ class FileUploaderTest {
         chainFailureResponses(retryAttempts);
 
         // Set retry attempts to the number of retryable status codes
-        FileUploader fileUploader = new FileUploader(mockHttpClient, uploadRequestPaths, retryAttempts, 0, 10);
+        DefaultFileUploader fileUploader = new DefaultFileUploader(mockHttpClient, uploadRequestPaths, retryAttempts, 0, 10);
         Map<Integer, String> partsMap = fileUploader.multipartUploadParts(mutableResponseStatus, metaData, "https://invalid");
         // All parts returns
         assertEquals(20, partsMap.size());
@@ -149,7 +149,7 @@ class FileUploaderTest {
         // No mocks for the upload parts. This means that all 20 part uploads will be skipped, but no error is logged.
         // This simulates a scenario where a thread is dropped and is unrecoverable before an exception is created.
 
-        FileUploader fileUploader = new FileUploader(mockHttpClient, uploadRequestPaths, 1, 0, 10);
+        DefaultFileUploader fileUploader = new DefaultFileUploader(mockHttpClient, uploadRequestPaths, 1, 0, 10);
         BinaryUploadStatus binaryUploadStatus = fileUploader.multipartUpload(
             metaData,
             startRequestHeaders,

@@ -13,12 +13,15 @@ import com.blackduck.integration.rest.client.IntHttpClient;
 import com.blackduck.integration.rest.proxy.ProxyInfo;
 import com.blackduck.integration.sca.upload.client.UploaderConfig;
 import com.blackduck.integration.sca.upload.client.model.BinaryScanRequestData;
-import com.blackduck.integration.sca.upload.file.FileUploader;
+import com.blackduck.integration.sca.upload.file.BlackDuckFileUploader;
 import com.blackduck.integration.sca.upload.file.UploadRequestPaths;
 import com.blackduck.integration.sca.upload.rest.BlackDuckHttpClient;
 import com.blackduck.integration.sca.upload.validation.UploadStateManager;
 import com.blackduck.integration.sca.upload.validation.UploadValidator;
 import com.google.gson.Gson;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Factory class to create needed uploader.
@@ -52,7 +55,7 @@ public class UploaderFactory {
 
     // TODO: Make public along with uncommenting test when ready
     private ArtifactsUploader createArtifactsUploader(String urlPrefix) {
-        return new ArtifactsUploader(uploaderConfig.getUploadChunkSize(), createFileUploader(urlPrefix), createUploadValidator());
+        return new ArtifactsUploader(uploaderConfig.getUploadChunkSize(), createBlackDuckFileUploader(urlPrefix), createUploadValidator());
     }
 
     /**
@@ -61,7 +64,7 @@ public class UploaderFactory {
      * @return the {@link BdbaUploader} created.
      */
     public BdbaUploader createBdbaUploader(String urlPrefix) {
-        return new BdbaUploader(uploaderConfig.getUploadChunkSize(), createFileUploader(urlPrefix), createUploadValidator());
+        return new BdbaUploader(uploaderConfig.getUploadChunkSize(), createBlackDuckFileUploader(urlPrefix), createUploadValidator());
     }
 
     /**
@@ -71,7 +74,7 @@ public class UploaderFactory {
      * @return the {@link BinaryUploader} created.
      */
     public BinaryUploader createBinaryUploader(String urlPrefix, BinaryScanRequestData binaryScanRequestData) {
-        return new BinaryUploader(uploaderConfig.getUploadChunkSize(), createFileUploader(urlPrefix), createUploadValidator(), binaryScanRequestData);
+        return new BinaryUploader(uploaderConfig.getUploadChunkSize(), createBlackDuckFileUploader(urlPrefix), createUploadValidator(), binaryScanRequestData);
     }
 
     /**
@@ -80,7 +83,7 @@ public class UploaderFactory {
      * @return the {@link ContainerUploader} created.
      */
     public ContainerUploader createContainerUploader(String urlPrefix) {
-        return new ContainerUploader(uploaderConfig.getUploadChunkSize(), createFileUploader(urlPrefix), createUploadValidator());
+        return new ContainerUploader(uploaderConfig.getUploadChunkSize(), createBlackDuckFileUploader(urlPrefix), createUploadValidator());
     }
 
     /**
@@ -97,22 +100,21 @@ public class UploaderFactory {
 
     // TODO: Make public along with uncommenting test when ready
     private ReversingLabUploader createReversingLabUploader(String urlPrefix) {
-        return new ReversingLabUploader(uploaderConfig.getUploadChunkSize(), createFileUploader(urlPrefix), createUploadValidator());
+        return new ReversingLabUploader(uploaderConfig.getUploadChunkSize(), createBlackDuckFileUploader(urlPrefix), createUploadValidator());
     }
 
     // TODO: Make public along with uncommenting test when ready
     private ToolsUploader createToolsUploader(String urlPrefix) {
-        return new ToolsUploader(uploaderConfig.getUploadChunkSize(), createFileUploader(urlPrefix), createUploadValidator());
+        return new ToolsUploader(uploaderConfig.getUploadChunkSize(), createBlackDuckFileUploader(urlPrefix), createUploadValidator());
     }
 
-    private FileUploader createFileUploader(String urlPrefix) {
-        return new FileUploader(
-            createHttpClient(),
-            createUploadRequestPaths(urlPrefix),
-            uploaderConfig.getMultipartUploadPartRetryAttempts(),
-            uploaderConfig.getMultipartUploadPartRetryInitialInterval(),
-            uploaderConfig.getMultipartUploadTimeoutInMinutes()
-        );
+    private BlackDuckFileUploader createBlackDuckFileUploader(String urlPrefix) {
+        return new BlackDuckFileUploader(createHttpClient(),
+                uploaderConfig.getMultipartUploadPartRetryAttempts(),
+                uploaderConfig.getMultipartUploadPartRetryInitialInterval(),
+                uploaderConfig.getMultipartUploadTimeoutInMinutes(),
+                uploaderConfig.getExecutorService(),
+                createUploadRequestPaths(urlPrefix));
     }
 
     private BlackDuckHttpClient createHttpClient() {

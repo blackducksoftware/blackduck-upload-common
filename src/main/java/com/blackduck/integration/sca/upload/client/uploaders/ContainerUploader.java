@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
+import com.blackduck.integration.sca.upload.file.FileUploader;
 import org.apache.http.HttpHeaders;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.FileEntity;
@@ -22,7 +23,7 @@ import com.blackduck.integration.function.ThrowingFunction;
 import com.blackduck.integration.rest.body.BodyContent;
 import com.blackduck.integration.rest.body.EntityBodyContent;
 import com.blackduck.integration.rest.response.Response;
-import com.blackduck.integration.sca.upload.file.FileUploader;
+import com.blackduck.integration.sca.upload.file.DefaultFileUploader;
 import com.blackduck.integration.sca.upload.file.model.MultipartUploadFileMetadata;
 import com.blackduck.integration.sca.upload.rest.model.ContentTypes;
 import com.blackduck.integration.sca.upload.rest.model.request.MultipartUploadStartRequest;

@@ -14,7 +14,7 @@ import static org.mockito.Mockito.when;
 
 import com.blackduck.integration.rest.response.Response;
 import com.blackduck.integration.sca.upload.client.model.BinaryScanRequestData;
-import com.blackduck.integration.sca.upload.file.FileUploader;
+import com.blackduck.integration.sca.upload.file.DefaultFileUploader;
 import com.blackduck.integration.sca.upload.rest.status.BinaryUploadStatus;
 import com.blackduck.integration.sca.upload.validation.UploadValidator;
 
@@ -29,7 +29,7 @@ class BinaryUploaderHeaderTest {
 
     @Test
     void testCreateUploadStatus_CaseInsensitiveETag() throws Exception {
-        FileUploader mockFileUploader = mock(FileUploader.class);
+        DefaultFileUploader mockFileUploader = mock(DefaultFileUploader.class);
         UploadValidator mockUploadValidator = mock(UploadValidator.class);
         BinaryScanRequestData mockBinaryScanRequestData = mock(BinaryScanRequestData.class);
         Response mockResponse = mock(Response.class);

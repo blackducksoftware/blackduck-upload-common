@@ -60,7 +60,7 @@ import com.google.gson.Gson;
  * Blackduck. If bdba-worker is running and the TestPropertyKey.BDBA_CONTAINER_AVAILABLE is set to "true", then the tests in this class will run. Otherwise, these tests are skipped.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class FileUploaderTestIT {
+class DefaultFileUploaderTestIT {
     private static final TestPropertiesManager testPropertiesManager = TestPropertyKey.getPropertiesManager();
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -146,7 +146,7 @@ class FileUploaderTestIT {
     // Upload tests
     @Test
     void testUpload() throws Exception {
-        FileUploader fileUploader = new FileUploader(httpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, uploadTimeoutMinutes);
+        DefaultFileUploader fileUploader = new DefaultFileUploader(httpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, uploadTimeoutMinutes);
         MultipartBodyContent bodyContent = new MultipartBodyContent(
             Map.of("fileupload", generatedSampleFilePath.toFile()),
             Map.of(
@@ -170,7 +170,7 @@ class FileUploaderTestIT {
     void testMultipartUpload() throws Exception {
         MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize);
 
-        FileUploader fileUploader = new FileUploader(httpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, uploadTimeoutMinutes);
+        DefaultFileUploader fileUploader = new DefaultFileUploader(httpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, uploadTimeoutMinutes);
         Map<String, String> startRequestHeaders = Map.of(HttpHeaders.CONTENT_TYPE, ContentTypes.APPLICATION_BINARY_MULTIPART_UPLOAD_START_V1);
         BinaryMultipartUploadStartRequest uploadStartRequest = new BinaryMultipartUploadStartRequest(metaData.getFileSize(), metaData.getChecksum(), binaryScanRequestData);
 
@@ -205,7 +205,7 @@ class FileUploaderTestIT {
             metaData.getFileChunks()
         );
 
-        FileUploader fileUploader = new FileUploader(httpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, uploadTimeoutMinutes);
+        DefaultFileUploader fileUploader = new DefaultFileUploader(httpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, uploadTimeoutMinutes);
         Map<String, String> startRequestHeaders = Map.of(HttpHeaders.CONTENT_TYPE, ContentTypes.APPLICATION_BINARY_MULTIPART_UPLOAD_START_V1);
         BinaryMultipartUploadStartRequest uploadStartRequest = new BinaryMultipartUploadStartRequest(
             invalidMetadata.getFileSize(),
@@ -236,7 +236,7 @@ class FileUploaderTestIT {
         MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize);
         MutableResponseStatus mutableResponseStatus = new MutableResponseStatus(-1, "unknown status message");
 
-        FileUploader fileUploader = new FileUploader(httpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, uploadTimeoutMinutes);
+        DefaultFileUploader fileUploader = new DefaultFileUploader(httpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, uploadTimeoutMinutes);
         BinaryMultipartUploadStartRequest uploadStartRequest = new BinaryMultipartUploadStartRequest(metaData.getFileSize(), metaData.getChecksum(), binaryScanRequestData);
         String startUploadUrl = fileUploader.startMultipartUpload(
             mutableResponseStatus,
@@ -253,7 +253,7 @@ class FileUploaderTestIT {
         MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize);
         MutableResponseStatus mutableResponseStatus = new MutableResponseStatus(-1, "unknown status message");
 
-        FileUploader fileUploader = new FileUploader(httpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, uploadTimeoutMinutes);
+        DefaultFileUploader fileUploader = new DefaultFileUploader(httpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, uploadTimeoutMinutes);
         BinaryMultipartUploadStartRequest uploadStartRequest = new BinaryMultipartUploadStartRequest(metaData.getFileSize(), metaData.getChecksum(), binaryScanRequestData);
         String startUploadUrl = fileUploader.startMultipartUpload(
             mutableResponseStatus,
@@ -282,7 +282,7 @@ class FileUploaderTestIT {
             "incorrect token"
         );
 
-        FileUploader fileUploader = new FileUploader(incorrectHttpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, uploadTimeoutMinutes);
+        DefaultFileUploader fileUploader = new DefaultFileUploader(incorrectHttpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, uploadTimeoutMinutes);
         Map<Integer, String> partsMap = fileUploader.multipartUploadParts(mutableResponseStatus, metaData, "https://invalid");
 
         assertEquals(0, partsMap.size());
@@ -295,7 +295,7 @@ class FileUploaderTestIT {
         BinaryMultipartUploadStartRequest uploadStartRequest = new BinaryMultipartUploadStartRequest(metaData.getFileSize(), metaData.getChecksum(), binaryScanRequestData);
         MutableResponseStatus mutableResponseStatus = new MutableResponseStatus(-1, "unknown status message");
 
-        FileUploader fileUploader = new FileUploader(httpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, uploadTimeoutMinutes);
+        DefaultFileUploader fileUploader = new DefaultFileUploader(httpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, uploadTimeoutMinutes);
         String startUploadUrl = fileUploader.startMultipartUpload(
             mutableResponseStatus,
             Map.of(HttpHeaders.CONTENT_TYPE, ContentTypes.APPLICATION_BINARY_MULTIPART_UPLOAD_START_V1),
@@ -334,7 +334,7 @@ class FileUploaderTestIT {
             modifiedPartList
         );
 
-        FileUploader multipartFileUploader = new FileUploader(httpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, uploadTimeoutMinutes);
+        DefaultFileUploader multipartFileUploader = new DefaultFileUploader(httpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, uploadTimeoutMinutes);
         BinaryMultipartUploadStartRequest uploadStartRequest = new BinaryMultipartUploadStartRequest(invalidMetadata.getFileSize(), metaData.getChecksum(), binaryScanRequestData);
         String startUploadUrl = multipartFileUploader.startMultipartUpload(
             mutableResponseStatus,
@@ -353,7 +353,7 @@ class FileUploaderTestIT {
         MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize);
         MutableResponseStatus mutableResponseStatus = new MutableResponseStatus(-1, "unknown status message");
 
-        FileUploader fileUploader = new FileUploader(httpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, uploadTimeoutMinutes);
+        DefaultFileUploader fileUploader = new DefaultFileUploader(httpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, uploadTimeoutMinutes);
         BinaryMultipartUploadStartRequest uploadStartRequest = new BinaryMultipartUploadStartRequest(metaData.getFileSize(), metaData.getChecksum(), binaryScanRequestData);
         String startUploadUrl = fileUploader.startMultipartUpload(
             mutableResponseStatus,
@@ -388,7 +388,7 @@ class FileUploaderTestIT {
             metaData.getChunkSize(),
             metaData.getFileChunks()
         );
-        FileUploader fileUploader = new FileUploader(httpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, uploadTimeoutMinutes);
+        DefaultFileUploader fileUploader = new DefaultFileUploader(httpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, uploadTimeoutMinutes);
         BinaryMultipartUploadStartRequest uploadStartRequest = new BinaryMultipartUploadStartRequest(
             invalidMetadata.getFileSize(),
             invalidMetadata.getChecksum(),
@@ -412,7 +412,7 @@ class FileUploaderTestIT {
         MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize);
 
         // Set timeout to 0 minutes to terminate executor service immediately
-        FileUploader fileUploader = new FileUploader(httpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, 0);
+        DefaultFileUploader fileUploader = new DefaultFileUploader(httpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, 0);
         Map<String, String> startRequestHeaders = Map.of(HttpHeaders.CONTENT_TYPE, ContentTypes.APPLICATION_BINARY_MULTIPART_UPLOAD_START_V1);
         BinaryMultipartUploadStartRequest uploadStartRequest = new BinaryMultipartUploadStartRequest(metaData.getFileSize(), metaData.getChecksum(), binaryScanRequestData);
 
@@ -449,7 +449,7 @@ class FileUploaderTestIT {
                 .when(spyHttpClient)
                 .execute(Mockito.any(Request.class));
 
-        FileUploader fileUploader = new FileUploader(spyHttpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, uploadTimeoutMinutes);
+        DefaultFileUploader fileUploader = new DefaultFileUploader(spyHttpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, uploadTimeoutMinutes);
         BinaryMultipartUploadStartRequest uploadStartRequest = new BinaryMultipartUploadStartRequest(metaData.getFileSize(), metaData.getChecksum(), binaryScanRequestData);
 
         String startUploadUrl = fileUploader.startMultipartUpload(
@@ -488,7 +488,7 @@ class FileUploaderTestIT {
                 .execute(Mockito.any(Request.class));
 
         // Setup upload
-        FileUploader fileUploader = new FileUploader(spyHttpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, uploadTimeoutMinutes);
+        DefaultFileUploader fileUploader = new DefaultFileUploader(spyHttpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, uploadTimeoutMinutes);
         BinaryMultipartUploadStartRequest uploadStartRequest = new BinaryMultipartUploadStartRequest(metaData.getFileSize(), metaData.getChecksum(), binaryScanRequestData);
 
         // Start upload
