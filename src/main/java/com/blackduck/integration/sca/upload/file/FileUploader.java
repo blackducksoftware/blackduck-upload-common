@@ -12,6 +12,7 @@ import java.io.RandomAccessFile;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -190,8 +191,12 @@ public class FileUploader {
             // Handle errors
             httpClient.throwExceptionForError(response);
 
+
             Map<String, String> responseHeaders = response.getHeaders();
-            return Optional.ofNullable(responseHeaders.get(HttpHeaders.LOCATION)).orElseThrow(() -> new IntegrationException("Could not find Location header."));
+            Map<String, String> caseInsensitiveResponseHeaders = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+            caseInsensitiveResponseHeaders.putAll(responseHeaders);
+
+            return Optional.ofNullable(caseInsensitiveResponseHeaders.get(HttpHeaders.LOCATION)).orElseThrow(() -> new IntegrationException("Could not find Location header."));
         } catch (IOException ex) {
             throw new IntegrationException(CLOSE_RESPONSE_OBJECT_MESSAGE + ex.getCause(), ex);
         }
