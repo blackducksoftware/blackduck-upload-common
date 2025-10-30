@@ -73,7 +73,11 @@ public abstract class AbstractFileUploader implements FileUploader {
     protected abstract Request getMultipartUploadStartRequest(Map<String, String> startRequestHeaders,
                                                               String multipartUploadStartContentType,
                                                               MultipartUploadStartRequest multipartUploadStartRequest) throws IntegrationException;
-    protected abstract Request getMultipartUploadFinishRequest(String uploadUrl) throws IntegrationException;
+
+    protected abstract Request.Builder getMultipartUploadPartRequestBuilder(MultipartUploadFileMetadata fileMetaData,
+                                                                            String uploadUrl,
+                                                                            MultipartUploadFilePart part) throws IntegrationException;
+    protected abstract Request getMultipartUploadFinishRequest(String uploadUrl, Map<Integer,String> tagOrderMap) throws IntegrationException;
 
     /**
      * Performs a standard file upload to Black Duck.
@@ -135,7 +139,7 @@ public abstract class AbstractFileUploader implements FileUploader {
             String uploadUrl = startMultipartUpload(mutableResponseStatus, multipartUploadStartRequestHeaders, multipartUploadStartContentType, multipartUploadStartRequest);
             Map<Integer, String> uploadedParts = multipartUploadParts(mutableResponseStatus, multipartUploadFileMetadata, uploadUrl);
             verifyAllPartsUploaded(multipartUploadFileMetadata, uploadedParts);
-            return finishMultipartUpload(mutableResponseStatus, uploadUrl, uploadStatusFunction);
+            return finishMultipartUpload(mutableResponseStatus, uploadUrl, uploadStatusFunction, uploadedParts);
         } catch (IntegrationException ex) {
             return uploadStatusErrorFunction.apply(mutableResponseStatus, ex);
         }
@@ -243,11 +247,7 @@ public abstract class AbstractFileUploader implements FileUploader {
     ) throws IOException, InterruptedException, IntegrationException {
         int retryCount = 0; // Initial upload is 0
         long interval = multipartUploadPartRetryInitialInterval;
-        HttpUrl requestUrl = new HttpUrl(uploadUrl);
-        Request.Builder requestBuilder = new Request.Builder()
-                .url(requestUrl)
-                .method(HttpMethod.PUT)
-                .headers(createUploadHeaders(fileMetaData, part));
+        Request.Builder requestBuilder = getMultipartUploadPartRequestBuilder(fileMetaData, uploadUrl, part);
 
         while (retryCount <= multipartUploadPartRetryAttempts && !isCanceled) {
             if (retryCount > 0) {
@@ -333,6 +333,7 @@ public abstract class AbstractFileUploader implements FileUploader {
      * @param mutableResponseStatus A {@link MutableResponseStatus} with the status of the multipart upload.
      * @param uploadUrl Url from Black Duck to be used for finishing the multipart upload.
      * @param uploadStatusFunction {@link ThrowingFunction} that generates the {@link UploadStatus} from the response.
+     * @param tagOrderMap A {@link Map} of uploaded part indexes and their tag ids.
      * @return {@link UploadStatus} status of the upload.
      * @param <T> status of the upload for the file type.
      * @throws IntegrationException if an error occurred while making the request to Black Duck.
@@ -340,9 +341,10 @@ public abstract class AbstractFileUploader implements FileUploader {
     public <T extends UploadStatus> T finishMultipartUpload(
             MutableResponseStatus mutableResponseStatus,
             String uploadUrl,
-            ThrowingFunction<Response, T, IntegrationException> uploadStatusFunction
+            ThrowingFunction<Response, T, IntegrationException> uploadStatusFunction,
+            Map<Integer, String> tagOrderMap
     ) throws IntegrationException {
-        Request request = getMultipartUploadFinishRequest(uploadUrl);
+        Request request = getMultipartUploadFinishRequest(uploadUrl, tagOrderMap);
         HttpMethod httpMethod= request.getMethod();
         HttpUrl requestUrl = request.getUrl();
 
@@ -393,18 +395,6 @@ public abstract class AbstractFileUploader implements FileUploader {
             logger.debug("Cause: ", ex);
         }
         isCanceled = true;
-    }
-
-    private Map<String, String> createUploadHeaders(MultipartUploadFileMetadata fileMetaData, MultipartUploadFilePart part) {
-        Map<String, String> requestHeaders = new HashMap<>();
-        requestHeaders.put(CONTENT_DIGEST_HEADER, String.format("md5=:%s:", part.getChecksum()));
-        requestHeaders.put(
-                HttpHeaders.CONTENT_RANGE,
-                String.format("bytes %s-%s/%s", part.getStartByteRange(), part.getStartByteRange() + part.getChunkSize() - 1, fileMetaData.getFileSize())
-        );
-        requestHeaders.put(HttpHeaders.CONTENT_TYPE, ContentTypes.APPLICATION_MULTIPART_UPLOAD_DATA_V1);
-
-        return requestHeaders;
     }
 
     private void verifyAllPartsUploaded(MultipartUploadFileMetadata multipartUploadFileMetaData, Map<Integer, String> uploadedParts) throws IntegrationException {

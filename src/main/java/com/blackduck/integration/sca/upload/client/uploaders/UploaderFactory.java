@@ -15,13 +15,11 @@ import com.blackduck.integration.sca.upload.client.UploaderConfig;
 import com.blackduck.integration.sca.upload.client.model.BinaryScanRequestData;
 import com.blackduck.integration.sca.upload.file.BlackDuckFileUploader;
 import com.blackduck.integration.sca.upload.file.UploadRequestPaths;
+import com.blackduck.integration.sca.upload.file.XmlApiFileUploader;
 import com.blackduck.integration.sca.upload.rest.BlackDuckHttpClient;
 import com.blackduck.integration.sca.upload.validation.UploadStateManager;
 import com.blackduck.integration.sca.upload.validation.UploadValidator;
 import com.google.gson.Gson;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Factory class to create needed uploader.
@@ -108,8 +106,12 @@ public class UploaderFactory {
         return new ToolsUploader(uploaderConfig.getUploadChunkSize(), createBlackDuckFileUploader(urlPrefix), createUploadValidator());
     }
 
+    private ScassMultipartUploader createScassMultipartUploader() {
+        return new ScassMultipartUploader(uploaderConfig.getUploadChunkSize(), createXmlApiFileUploader(), createUploadValidator());
+    }
+
     private BlackDuckFileUploader createBlackDuckFileUploader(String urlPrefix) {
-        return new BlackDuckFileUploader(createHttpClient(),
+        return new BlackDuckFileUploader(createBlackduckHttpClient(),
                 uploaderConfig.getMultipartUploadPartRetryAttempts(),
                 uploaderConfig.getMultipartUploadPartRetryInitialInterval(),
                 uploaderConfig.getMultipartUploadTimeoutInMinutes(),
@@ -117,7 +119,25 @@ public class UploaderFactory {
                 createUploadRequestPaths(urlPrefix));
     }
 
-    private BlackDuckHttpClient createHttpClient() {
+    private XmlApiFileUploader createXmlApiFileUploader() {
+        return new XmlApiFileUploader(createHttpClient(),
+                uploaderConfig.getMultipartUploadPartRetryAttempts(),
+                uploaderConfig.getMultipartUploadPartRetryInitialInterval(),
+                uploaderConfig.getMultipartUploadTimeoutInMinutes(),
+                uploaderConfig.getExecutorService());
+    }
+
+    private IntHttpClient createHttpClient() {
+        return new IntHttpClient(
+                intLogger,
+                gson,
+                uploaderConfig.getBlackDuckTimeoutInSeconds(),
+                uploaderConfig.isAlwaysTrustServerCertificate(),
+                uploaderConfig.getProxyInfo()
+        );
+    }
+
+    private BlackDuckHttpClient createBlackduckHttpClient() {
         return new BlackDuckHttpClient(
             intLogger,
             gson,
