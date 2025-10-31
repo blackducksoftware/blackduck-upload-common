@@ -7,6 +7,7 @@ import com.blackduck.integration.rest.body.EntityBodyContent;
 import com.blackduck.integration.rest.response.Response;
 import com.blackduck.integration.sca.upload.file.FileUploader;
 import com.blackduck.integration.sca.upload.file.model.MultipartUploadFileMetadata;
+import com.blackduck.integration.sca.upload.file.model.MultipartUploadStartRequestData;
 import com.blackduck.integration.sca.upload.rest.model.ContentTypes;
 import com.blackduck.integration.sca.upload.rest.model.request.MultipartUploadStartRequest;
 import com.blackduck.integration.sca.upload.rest.status.DefaultUploadStatus;
@@ -34,18 +35,7 @@ public class ScassMultipartUploader extends AbstractUploader<DefaultUploadStatus
     }
 
     @Override
-    protected Map<String, String> getMultipartUploadStartRequestHeaders() {
-        Map<String, String> headers = new HashMap<>();
-        return headers;
-    }
-
-    @Override
-    protected String getMultipartUploadStartContentType() {
-        return "";
-    }
-
-    @Override
-    protected MultipartUploadStartRequest getMultipartUploadStartRequest(Supplier<MultipartUploadFileMetadata> uploadFileMetaDataSupplier) {
+    protected Supplier<MultipartUploadStartRequestData> createUploadStartRequestData(MultipartUploadFileMetadata multipartUploadFileMetadata) {
         return null;
     }
 

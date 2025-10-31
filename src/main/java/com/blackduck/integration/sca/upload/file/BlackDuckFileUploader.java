@@ -7,6 +7,7 @@ import com.blackduck.integration.rest.body.StringBodyContent;
 import com.blackduck.integration.rest.request.Request;
 import com.blackduck.integration.sca.upload.file.model.MultipartUploadFileMetadata;
 import com.blackduck.integration.sca.upload.file.model.MultipartUploadFilePart;
+import com.blackduck.integration.sca.upload.file.model.MultipartUploadStartRequestData;
 import com.blackduck.integration.sca.upload.rest.BlackDuckHttpClient;
 import com.blackduck.integration.sca.upload.rest.model.ContentTypes;
 import com.blackduck.integration.sca.upload.rest.model.request.MultipartUploadStartRequest;
@@ -33,7 +34,10 @@ public class BlackDuckFileUploader extends AbstractFileUploader {
     }
 
     @Override
-    protected Request getMultipartUploadStartRequest(Map<String, String> startRequestHeaders, String multipartUploadStartContentType, MultipartUploadStartRequest multipartUploadStartRequest) throws IntegrationException {
+    protected Request getMultipartUploadStartRequest(MultipartUploadStartRequestData uploadStartRequestData) throws IntegrationException {
+        Map<String, String> startRequestHeaders = uploadStartRequestData.getHeaders();
+        String multipartUploadStartContentType = uploadStartRequestData.getContentType();
+        MultipartUploadStartRequest multipartUploadStartRequest = uploadStartRequestData.getBodyContentAs(MultipartUploadStartRequest.class);
         String requestPath = uploadRequestPaths.getMultipartUploadStartRequestPath();
         HttpUrl requestUrl = httpClient.getBlackDuckUrl().appendRelativeUrl(requestPath);
 

@@ -13,10 +13,10 @@ import com.blackduck.integration.rest.request.Request;
 import com.blackduck.integration.rest.response.Response;
 import com.blackduck.integration.sca.upload.file.model.MultipartUploadFileMetadata;
 import com.blackduck.integration.sca.upload.file.model.MultipartUploadFilePart;
+import com.blackduck.integration.sca.upload.file.model.MultipartUploadStartRequestData;
 import com.blackduck.integration.sca.upload.file.response.UploadPartResponse;
 import com.blackduck.integration.sca.upload.rest.BlackDuckHttpClient;
 import com.blackduck.integration.sca.upload.rest.model.ContentTypes;
-import com.blackduck.integration.sca.upload.rest.model.request.MultipartUploadStartRequest;
 import com.blackduck.integration.sca.upload.rest.status.MutableResponseStatus;
 import com.blackduck.integration.sca.upload.rest.status.UploadStatus;
 import com.blackduck.integration.sca.upload.validation.UploadValidator;
@@ -28,13 +28,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
+import java.util.function.Supplier;
 
 public abstract class AbstractFileUploader implements FileUploader {
     public static final String CLOSE_RESPONSE_OBJECT_MESSAGE = "Was unable to close response object: ";
@@ -70,9 +70,7 @@ public abstract class AbstractFileUploader implements FileUploader {
     }
 
     protected abstract HttpUrl getUploadUrl() throws IntegrationException;
-    protected abstract Request getMultipartUploadStartRequest(Map<String, String> startRequestHeaders,
-                                                              String multipartUploadStartContentType,
-                                                              MultipartUploadStartRequest multipartUploadStartRequest) throws IntegrationException;
+    protected abstract Request getMultipartUploadStartRequest(MultipartUploadStartRequestData uploadStartRequestData) throws IntegrationException;
 
     protected abstract Request.Builder getMultipartUploadPartRequestBuilder(MultipartUploadFileMetadata fileMetaData,
                                                                             String uploadUrl,
@@ -118,9 +116,6 @@ public abstract class AbstractFileUploader implements FileUploader {
      * Performs a multipart file upload to Black Duck.
      *
      * @param multipartUploadFileMetadata The {@link MultipartUploadFileMetadata} for the file to upload.
-     * @param multipartUploadStartRequestHeaders A {@link Map} of headers for the multipart upload start request.
-     * @param multipartUploadStartContentType The Content-Type for the start request body.
-     * @param multipartUploadStartRequest The data object for multipart upload start request.
      * @param uploadStatusFunction {@link ThrowingFunction} that generates the {@link UploadStatus} from the response.
      * @param uploadStatusErrorFunction {@link BiFunction} that generates the error {@link UploadStatus} from the response and exception thrown.
      * @return {@link UploadStatus} status of the upload.
@@ -128,15 +123,13 @@ public abstract class AbstractFileUploader implements FileUploader {
      */
     public <T extends UploadStatus> T multipartUpload(
             MultipartUploadFileMetadata multipartUploadFileMetadata,
-            Map<String, String> multipartUploadStartRequestHeaders,
-            String multipartUploadStartContentType,
-            MultipartUploadStartRequest multipartUploadStartRequest,
+            Supplier<MultipartUploadStartRequestData>  startUploadRequestSupplier,
             ThrowingFunction<Response, T, IntegrationException> uploadStatusFunction,
             BiFunction<MutableResponseStatus, IntegrationException, T> uploadStatusErrorFunction
     ) {
         MutableResponseStatus mutableResponseStatus = new MutableResponseStatus(-1, "unknown status");
         try {
-            String uploadUrl = startMultipartUpload(mutableResponseStatus, multipartUploadStartRequestHeaders, multipartUploadStartContentType, multipartUploadStartRequest);
+            String uploadUrl = startMultipartUpload(mutableResponseStatus, startUploadRequestSupplier);
             Map<Integer, String> uploadedParts = multipartUploadParts(mutableResponseStatus, multipartUploadFileMetadata, uploadUrl);
             verifyAllPartsUploaded(multipartUploadFileMetadata, uploadedParts);
             return finishMultipartUpload(mutableResponseStatus, uploadUrl, uploadStatusFunction, uploadedParts);
@@ -149,19 +142,14 @@ public abstract class AbstractFileUploader implements FileUploader {
      * Initiates the start of a multipart upload.
      *
      * @param mutableResponseStatus A {@link MutableResponseStatus} with the status of the multipart upload.
-     * @param startRequestHeaders A {@link Map} of headers for the multipart upload start request.
-     * @param multipartUploadStartContentType The Content-Type for the start request body.
-     * @param multipartUploadStartRequest The data object for multipart upload start request.
      * @return Value of the upload url from Black Duck to be used for part uploads and assembly.
      * @throws IntegrationException if an error occurred while making the request to Black Duck.
      */
     protected String startMultipartUpload(
             MutableResponseStatus mutableResponseStatus,
-            Map<String, String> startRequestHeaders,
-            String multipartUploadStartContentType,
-            MultipartUploadStartRequest multipartUploadStartRequest
+            Supplier<MultipartUploadStartRequestData> startRequestDataSupplier
     ) throws IntegrationException {
-        Request request = getMultipartUploadStartRequest(startRequestHeaders, multipartUploadStartContentType, multipartUploadStartRequest);
+        Request request = getMultipartUploadStartRequest(startRequestDataSupplier.get());
         try (Response response = httpClient.execute(request)) {
             mutableResponseStatus.setStatusCode(response.getStatusCode());
             mutableResponseStatus.setStatusMessage(response.getStatusMessage());

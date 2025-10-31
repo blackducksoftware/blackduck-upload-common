@@ -8,11 +8,13 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.Optional;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -43,6 +45,8 @@ public class BlackDuckHttpClientTestIT {
 
     @BeforeAll
     public static void setup() {
+        Optional<String> optionalUrl = testPropertiesManager.getProperty(TestPropertyKey.TEST_BLACKDUCK_URL.getPropertyKey());
+        Assumptions.assumeTrue(optionalUrl.isPresent());
         String blackduckUrlString = assertDoesNotThrow(()
             -> testPropertiesManager.getRequiredProperty(TestPropertyKey.TEST_BLACKDUCK_URL.getPropertyKey()));
         blackduckUrl = assertDoesNotThrow(() -> new HttpUrl(blackduckUrlString));
@@ -59,7 +63,7 @@ public class BlackDuckHttpClientTestIT {
             blackduckUrl,
             RandomStringUtils.randomAlphanumeric(100)
         );
-
+        Assumptions.assumeTrue(blackDuckHttpClient.canConnect());
         HttpUriRequest httpUriRequest = createRequest();
         assertFalse(blackDuckHttpClient.isAlreadyAuthenticated(httpUriRequest), "Expected to NOT be authenticated");
 
@@ -86,7 +90,7 @@ public class BlackDuckHttpClientTestIT {
             blackduckUrl,
             blackduckApiToken
         );
-
+        Assumptions.assumeTrue(blackDuckHttpClient.canConnect());
         HttpUriRequest httpUriRequest = createRequest();
         assertFalse(blackDuckHttpClient.isAlreadyAuthenticated(httpUriRequest), "Expected to NOT be authenticated");
 

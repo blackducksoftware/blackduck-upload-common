@@ -51,8 +51,10 @@ import com.google.gson.Gson;
  *
  * @see BlackDuckHttpClient
  * @see UploadRequestPaths
+ * @deprecated
  */
-public class DefaultFileUploader implements FileUploader {
+@Deprecated()
+public class DefaultFileUploader {
     public static final String CLOSE_RESPONSE_OBJECT_MESSAGE = "Was unable to close response object: ";
     public static final String CONTENT_DIGEST_HEADER = "Content-Digest";
     private final Logger logger = LoggerFactory.getLogger(getClass());

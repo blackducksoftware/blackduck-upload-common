@@ -3,6 +3,7 @@ package com.blackduck.integration.sca.upload.client.uploaders;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.blackduck.integration.sca.upload.file.BlackDuckFileUploader;
 import org.apache.http.HttpHeaders;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -29,7 +30,7 @@ class BinaryUploaderHeaderTest {
 
     @Test
     void testCreateUploadStatus_CaseInsensitiveETag() throws Exception {
-        DefaultFileUploader mockFileUploader = mock(DefaultFileUploader.class);
+        BlackDuckFileUploader mockFileUploader = mock(BlackDuckFileUploader.class);
         UploadValidator mockUploadValidator = mock(UploadValidator.class);
         BinaryScanRequestData mockBinaryScanRequestData = mock(BinaryScanRequestData.class);
         Response mockResponse = mock(Response.class);

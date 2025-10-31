@@ -39,7 +39,7 @@ import com.blackduck.integration.sca.upload.validation.UploadValidator;
  * @see FileUploader
  * @see UploadValidator
  */
-public class BdbaUploader extends AbstractUploader<DefaultUploadStatus> {
+public class BdbaUploader extends AbstractBlackDuckUploader<DefaultUploadStatus> {
 
     /**
      * Constructor for BDBA uploads.

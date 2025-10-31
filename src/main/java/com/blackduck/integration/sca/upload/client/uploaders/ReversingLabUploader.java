@@ -35,7 +35,7 @@ import com.blackduck.integration.sca.upload.validation.UploadValidator;
  * @see FileUploader
  * @see UploadValidator
  */
-public class ReversingLabUploader extends AbstractUploader<UploadStatus> {
+public class ReversingLabUploader extends AbstractBlackDuckUploader<UploadStatus> {
 
     /**
      * Constructor for ReversingLab uploads.

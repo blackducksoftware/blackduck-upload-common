@@ -35,7 +35,7 @@ import com.blackduck.integration.sca.upload.validation.UploadValidator;
  * @see FileUploader
  * @see UploadValidator
  */
-public class ToolsUploader extends AbstractUploader<UploadStatus> {
+public class ToolsUploader extends AbstractBlackDuckUploader<UploadStatus> {
 
     /**
      * Constructor for Tools uploads.

@@ -35,7 +35,7 @@ import com.blackduck.integration.sca.upload.validation.UploadValidator;
  * @see FileUploader
  * @see UploadValidator
  */
-public class ArtifactsUploader extends AbstractUploader<UploadStatus> {
+public class ArtifactsUploader extends AbstractBlackDuckUploader<UploadStatus> {
 
     /**
      * Constructor for Artifact uploads.

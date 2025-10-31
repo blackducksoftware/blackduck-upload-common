@@ -43,7 +43,7 @@ import com.blackduck.integration.sca.upload.validation.UploadValidator;
  * @see FileUploader
  * @see UploadValidator
  */
-public class BinaryUploader extends AbstractUploader<BinaryUploadStatus> {
+public class BinaryUploader extends AbstractBlackDuckUploader<BinaryUploadStatus> {
     private final BinaryScanRequestData binaryScanRequestData;
 
     /**

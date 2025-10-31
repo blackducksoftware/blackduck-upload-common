@@ -13,7 +13,10 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
+import com.blackduck.integration.function.ThrowingSupplier;
+import com.blackduck.integration.rest.request.Request;
 import com.blackduck.integration.sca.upload.file.FileUploader;
+import com.blackduck.integration.sca.upload.file.model.MultipartUploadStartRequestData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,9 +88,7 @@ public abstract class AbstractUploader<T extends UploadStatus> {
         logger.info("Finish of calculate for file offsets.");
         return fileUploader.multipartUpload(
             multipartUploadFileMetadata,
-            getMultipartUploadStartRequestHeaders(),
-            getMultipartUploadStartContentType(),
-            getMultipartUploadStartRequest(() -> multipartUploadFileMetadata),
+            createUploadStartRequestData(multipartUploadFileMetadata),
             createUploadStatus(),
             createUploadStatusError()
         );
@@ -101,30 +102,7 @@ public abstract class AbstractUploader<T extends UploadStatus> {
      */
     protected abstract BodyContent createBodyContent(Path filePath);
 
-    /**
-     * Retrieve the HTTP request headers used for starting multipart upload requests.
-     *
-     * @return a map of HTTP request headers.
-     */
-    protected abstract Map<String, String> getMultipartUploadStartRequestHeaders();
-
-    /**
-     * Retrieve the Content-Type for the multipart upload start request.
-     *
-     * @return the uploader Content-Type for upload start requests.
-     */
-    protected abstract String getMultipartUploadStartContentType();
-
-    /**
-     * Retrieve the body content for an HTTP multipart upload start request.
-     * This is serialized as JSON to the Black Duck server.
-     *
-     * @see MultipartUploadStartRequest
-     * @see MultipartUploadFileMetadata
-     * @param uploadFileMetaDataSupplier The supplier of metadata used to create a start request.
-     * @return the multipart start request body content.
-     */
-    protected abstract MultipartUploadStartRequest getMultipartUploadStartRequest(Supplier<MultipartUploadFileMetadata> uploadFileMetaDataSupplier);
+    protected abstract Supplier<MultipartUploadStartRequestData> createUploadStartRequestData(MultipartUploadFileMetadata multipartUploadFileMetadata);
 
     /**
      * Construct the status object for an upload either containing content or error status.
