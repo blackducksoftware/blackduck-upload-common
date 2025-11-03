@@ -7,7 +7,6 @@ import com.blackduck.integration.rest.request.Request;
 import com.blackduck.integration.sca.upload.file.model.MultipartUploadFileMetadata;
 import com.blackduck.integration.sca.upload.file.model.MultipartUploadFilePart;
 import com.blackduck.integration.sca.upload.file.model.MultipartUploadStartRequestData;
-import com.blackduck.integration.sca.upload.rest.model.request.MultipartUploadStartRequest;
 
 import java.util.Map;
 import java.util.concurrent.ExecutorService;

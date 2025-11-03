@@ -9,7 +9,6 @@ import com.blackduck.integration.sca.upload.file.FileUploader;
 import com.blackduck.integration.sca.upload.file.model.MultipartUploadFileMetadata;
 import com.blackduck.integration.sca.upload.file.model.MultipartUploadStartRequestData;
 import com.blackduck.integration.sca.upload.rest.model.ContentTypes;
-import com.blackduck.integration.sca.upload.rest.model.request.MultipartUploadStartRequest;
 import com.blackduck.integration.sca.upload.rest.status.DefaultUploadStatus;
 import com.blackduck.integration.sca.upload.rest.status.MutableResponseStatus;
 import com.blackduck.integration.sca.upload.validation.UploadValidator;
@@ -17,8 +16,6 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.FileEntity;
 
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
