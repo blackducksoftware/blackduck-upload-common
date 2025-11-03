@@ -21,6 +21,9 @@ import com.blackduck.integration.sca.upload.validation.UploadStateManager;
 import com.blackduck.integration.sca.upload.validation.UploadValidator;
 import com.google.gson.Gson;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 /**
  * Factory class to create needed uploader.
  * @see UploaderConfig
@@ -111,11 +114,12 @@ public class UploaderFactory {
     }
 
     private BlackDuckFileUploader createBlackDuckFileUploader(String urlPrefix) {
+        // Black Duck SCA can only support single threaded executor right now.  Use a single threaded executor.
         return new BlackDuckFileUploader(createBlackduckHttpClient(),
                 uploaderConfig.getMultipartUploadPartRetryAttempts(),
                 uploaderConfig.getMultipartUploadPartRetryInitialInterval(),
                 uploaderConfig.getMultipartUploadTimeoutInMinutes(),
-                uploaderConfig.getExecutorService(),
+                Executors.newSingleThreadExecutor(),
                 createUploadRequestPaths(urlPrefix));
     }
 
