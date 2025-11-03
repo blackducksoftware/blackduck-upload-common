@@ -106,7 +106,7 @@ public class UploaderFactory {
         return new ToolsUploader(uploaderConfig.getUploadChunkSize(), createBlackDuckFileUploader(urlPrefix), createUploadValidator());
     }
 
-    private ScassMultipartUploader createScassMultipartUploader() {
+    public ScassMultipartUploader createScassMultipartUploader() {
         return new ScassMultipartUploader(uploaderConfig.getUploadChunkSize(), createXmlApiFileUploader(), createUploadValidator());
     }
 
