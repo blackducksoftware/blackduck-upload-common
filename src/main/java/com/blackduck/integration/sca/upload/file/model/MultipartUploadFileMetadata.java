@@ -8,6 +8,7 @@
 package com.blackduck.integration.sca.upload.file.model;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import com.blackduck.integration.sca.upload.file.FileSplitter;
@@ -20,9 +21,13 @@ import com.blackduck.integration.sca.upload.file.FileSplitter;
 public class MultipartUploadFileMetadata {
     private final String fileName;
     private final String checksum;
-    private final UUID uploadId;
+    private UUID uploadId;
     private final long fileSize;
     private final int chunkSize;
+    private MultipartUrlData initalUploadUrl = null;
+    private MultipartUrlData completeUploadUrl = null;
+    private MultipartUrlData abortUploadUrl = null;
+    private String scassUploadId = null;
     private final List<MultipartUploadFilePart> fileChunks;
 
     /**
@@ -45,6 +50,18 @@ public class MultipartUploadFileMetadata {
         this.fileChunks = fileChunks;
     }
 
+    public MultipartUploadFileMetadata(String fileName, String scassUploadId, String checksum, long fileSize, int chunkSize, List<MultipartUploadFilePart> fileChunks, MultipartUrlData initalUploadUrl, MultipartUrlData completeUploadUrl, MultipartUrlData abortUploadUrl) {
+        this.fileName = fileName;
+        this.checksum = checksum;
+        this.fileSize = fileSize;
+        this.scassUploadId = scassUploadId;
+        this.chunkSize = chunkSize;
+        this.fileChunks = fileChunks;
+        this.initalUploadUrl = initalUploadUrl;
+        this.completeUploadUrl = completeUploadUrl;
+        this.abortUploadUrl = abortUploadUrl;
+    }
+
     /**
      * Retrieve the name of the file.
      *
@@ -55,9 +72,9 @@ public class MultipartUploadFileMetadata {
     }
 
     /**
-     * Retrieve the MD5 checksum of the file.
+     * Retrieve the MD5/CRC32C checksum of the file.
      *
-     * @return MD5 checksum.
+     * @return checksum.
      */
     public String getChecksum() {
         return checksum;
@@ -88,6 +105,22 @@ public class MultipartUploadFileMetadata {
      */
     public int getChunkSize() {
         return chunkSize;
+    }
+
+    public MultipartUrlData getInitalUploadUrl() {
+        return initalUploadUrl;
+    }
+
+    public MultipartUrlData getCompleteUploadUrl() {
+        return completeUploadUrl;
+    }
+
+    public MultipartUrlData getAbortUploadUrl() {
+        return abortUploadUrl;
+    }
+
+    public String getScassUploadId() {
+        return scassUploadId;
     }
 
     /**

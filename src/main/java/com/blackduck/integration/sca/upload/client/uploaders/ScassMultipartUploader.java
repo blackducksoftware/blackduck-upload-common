@@ -33,7 +33,7 @@ public class ScassMultipartUploader extends AbstractUploader<DefaultUploadStatus
 
     @Override
     protected Supplier<MultipartUploadStartRequestData> createUploadStartRequestData(MultipartUploadFileMetadata multipartUploadFileMetadata) {
-        return null;
+        return () -> new MultipartUploadStartRequestData(multipartUploadFileMetadata.getInitalUploadUrl().getUrl(), ContentType.APPLICATION_OCTET_STREAM.getMimeType(), multipartUploadFileMetadata.getInitalUploadUrl().getHeaders(), null);
     }
 
     @Override

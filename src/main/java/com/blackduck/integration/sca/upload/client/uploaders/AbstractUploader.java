@@ -82,6 +82,14 @@ public abstract class AbstractUploader<T extends UploadStatus> {
         return fileUploader.upload(createBodyContent(uploadFilePath), createUploadStatus(), createUploadStatusError());
     }
 
+    public T upload(MultipartUploadFileMetadata multipartUploadFileMetadata, int chunkSize) throws IOException, IntegrationException {
+        Path uploadFilePath = Path.of(multipartUploadFileMetadata.getFileName());
+        uploadValidator.validateUploadFile(uploadFilePath);
+
+        uploadValidator.validateUploaderConfiguration(uploadFilePath, chunkSize);
+        return partitionAndUploadFile(multipartUploadFileMetadata);
+    }
+
     private T partitionAndUploadFile(Path uploadFilePath) throws IOException, IntegrationException {
         logger.info("Start of calculate for file offsets.");
         MultipartUploadFileMetadata multipartUploadFileMetadata = fileSplitter.splitFile(uploadFilePath, chunkSize);
@@ -91,6 +99,16 @@ public abstract class AbstractUploader<T extends UploadStatus> {
             createUploadStartRequestData(multipartUploadFileMetadata),
             createUploadStatus(),
             createUploadStatusError()
+        );
+    }
+
+    private T partitionAndUploadFile(MultipartUploadFileMetadata multipartUploadFileMetadata) throws IOException, IntegrationException {
+        logger.info("Start of upload for multipart upload.");
+        return fileUploader.multipartUpload(
+                multipartUploadFileMetadata,
+                createUploadStartRequestData(multipartUploadFileMetadata),
+                createUploadStatus(),
+                createUploadStatusError()
         );
     }
 

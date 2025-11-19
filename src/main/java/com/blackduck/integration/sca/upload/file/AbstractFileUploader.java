@@ -14,6 +14,7 @@ import com.blackduck.integration.rest.response.Response;
 import com.blackduck.integration.sca.upload.file.model.MultipartUploadFileMetadata;
 import com.blackduck.integration.sca.upload.file.model.MultipartUploadFilePart;
 import com.blackduck.integration.sca.upload.file.model.MultipartUploadStartRequestData;
+import com.blackduck.integration.sca.upload.file.model.MultipartUrlData;
 import com.blackduck.integration.sca.upload.file.response.UploadPartResponse;
 import com.blackduck.integration.sca.upload.rest.BlackDuckHttpClient;
 import com.blackduck.integration.sca.upload.rest.model.ContentTypes;
@@ -33,6 +34,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
@@ -41,7 +43,7 @@ public abstract class AbstractFileUploader implements FileUploader {
     public static final String CONTENT_DIGEST_HEADER = "Content-Digest";
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final IntHttpClient httpClient;
-    private boolean isCanceled = false;
+    private AtomicBoolean isCanceled = new AtomicBoolean(false);
     private final int multipartUploadPartRetryAttempts;
     // Retry interval in milliseconds
     private final long multipartUploadPartRetryInitialInterval;
@@ -75,7 +77,7 @@ public abstract class AbstractFileUploader implements FileUploader {
     protected abstract Request.Builder getMultipartUploadPartRequestBuilder(MultipartUploadFileMetadata fileMetaData,
                                                                             String uploadUrl,
                                                                             MultipartUploadFilePart part) throws IntegrationException;
-    protected abstract Request getMultipartUploadFinishRequest(String uploadUrl, Map<Integer,String> tagOrderMap) throws IntegrationException;
+    protected abstract Request getMultipartUploadFinishRequest(String uploadUrl, Map<Integer,String> tagOrderMap, MultipartUrlData completeUploadUrl) throws IntegrationException;
 
     /**
      * Performs a standard file upload to Black Duck.
@@ -132,7 +134,7 @@ public abstract class AbstractFileUploader implements FileUploader {
             String uploadUrl = startMultipartUpload(mutableResponseStatus, startUploadRequestSupplier);
             Map<Integer, String> uploadedParts = multipartUploadParts(mutableResponseStatus, multipartUploadFileMetadata, uploadUrl);
             verifyAllPartsUploaded(multipartUploadFileMetadata, uploadedParts);
-            return finishMultipartUpload(mutableResponseStatus, uploadUrl, uploadStatusFunction, uploadedParts);
+            return finishMultipartUpload(mutableResponseStatus, uploadUrl, uploadStatusFunction, uploadedParts, multipartUploadFileMetadata.getCompleteUploadUrl(), multipartUploadFileMetadata.getAbortUploadUrl());
         } catch (IntegrationException ex) {
             return uploadStatusErrorFunction.apply(mutableResponseStatus, ex);
         }
@@ -193,7 +195,11 @@ public abstract class AbstractFileUploader implements FileUploader {
                         logger.error("Error uploading part: ", e);
                     }
                     if (!partUploaded) {
-                        cancelUpload(uploadUrl);
+                        try {
+                            cancelUpload(uploadUrl, multipartUploadFileMetadata.getAbortUploadUrl());
+                        } catch (IntegrationException e) {
+                            throw new RuntimeException(e);
+                        }
                     }
                 });
             }
@@ -206,10 +212,10 @@ public abstract class AbstractFileUploader implements FileUploader {
             if(!success) {
                 logger.error("Upload timed out. Cancelling upload.");
                 logger.debug(partsUploadedString(tagOrderMap.size(), multipartUploadFileMetadata.getFileChunks().size()));
-                cancelUpload(uploadUrl);
+                cancelUpload(uploadUrl, multipartUploadFileMetadata.getAbortUploadUrl());
                 throw new IntegrationTimeoutException("Executor service timed out.");
             }
-            if (isCanceled) {
+            if (isCanceled.get()) {
                 logger.info("Upload was cancelled. Check log for errors.");
             } else if (success) {
                 logger.info("All part requests submitted successfully.");
@@ -237,7 +243,7 @@ public abstract class AbstractFileUploader implements FileUploader {
         long interval = multipartUploadPartRetryInitialInterval;
         Request.Builder requestBuilder = getMultipartUploadPartRequestBuilder(fileMetaData, uploadUrl, part);
 
-        while (retryCount <= multipartUploadPartRetryAttempts && !isCanceled) {
+        while (retryCount <= multipartUploadPartRetryAttempts && !isCanceled.get()) {
             if (retryCount > 0) {
                 logger.info("Retry attempt {} for uploading of part {}", retryCount, part);
                 if (multipartUploadPartRetryInitialInterval > 0) {
@@ -283,7 +289,7 @@ public abstract class AbstractFileUploader implements FileUploader {
             retryCount += 1;
         }
 
-        String status = isCanceled ? "cancelled" : "failed";
+        String status = isCanceled.get() ? "cancelled" : "failed";
         logger.error("Upload of part {} {}", status, part);
         return false;
     }
@@ -294,7 +300,7 @@ public abstract class AbstractFileUploader implements FileUploader {
     }
 
     private Optional<UploadPartResponse> executeUploadPart(Request request, MultipartUploadFilePart part) {
-        if (isCanceled) {
+        if (isCanceled.get()) {
             logger.debug("Multipart upload has been canceled, not starting upload for part {}, beginning with byte {}.", part.getIndex(), part.getStartByteRange());
             return Optional.empty();
         }
@@ -330,13 +336,15 @@ public abstract class AbstractFileUploader implements FileUploader {
             MutableResponseStatus mutableResponseStatus,
             String uploadUrl,
             ThrowingFunction<Response, T, IntegrationException> uploadStatusFunction,
-            Map<Integer, String> tagOrderMap
+            Map<Integer, String> tagOrderMap,
+            MultipartUrlData completeUploadUrl,
+            MultipartUrlData abortUploadUrl
     ) throws IntegrationException {
-        Request request = getMultipartUploadFinishRequest(uploadUrl, tagOrderMap);
+        Request request = getMultipartUploadFinishRequest(uploadUrl, tagOrderMap, completeUploadUrl);
         HttpMethod httpMethod= request.getMethod();
         HttpUrl requestUrl = request.getUrl();
 
-        if (isCanceled) {
+        if (isCanceled.get()) {
             logger.debug("Upload has been canceled, not calling {} against {}", httpMethod, requestUrl);
             throw new IntegrationException("Upload has been canceled, not calling {} against {}");
         }
@@ -349,40 +357,54 @@ public abstract class AbstractFileUploader implements FileUploader {
             httpClient.throwExceptionForError(response);
             return uploadStatusFunction.apply(response);
         } catch (IOException ex) {
-            cancelUpload(uploadUrl);
+            cancelUpload(uploadUrl, abortUploadUrl);
             throw new IntegrationException(CLOSE_RESPONSE_OBJECT_MESSAGE + ex.getCause(), ex);
         } catch (IntegrationException ex) {
-            cancelUpload(uploadUrl);
+            cancelUpload(uploadUrl, abortUploadUrl);
             throw ex;
         }
     }
 
-    // Notifies Black Duck of an upload cancellation and blocks further uploads of parts by the uploader.
-    private void cancelUpload(String uploadUrl) {
-        if (isCanceled) {
+    // Notifies Black Duck or Cloud Storage server of an upload cancellation and blocks further uploads of parts by the uploader.
+    private void cancelUpload(String uploadUrl, MultipartUrlData abortUploadUrl) throws IntegrationException {
+        if (isCanceled.get()) {
             logger.debug("Upload already cancelled.");
             return;
         }
 
         logger.info("Canceling multipart file upload.");
-        try {
+        Request request;
+
+        if(abortUploadUrl != null) {
+            HttpUrl requestUrl = new HttpUrl(abortUploadUrl.getUrl());
+            Map<String, String> requestHeaders = abortUploadUrl.getHeaders();
+
+            Request.Builder requestBuilder = new Request.Builder()
+                    .url(requestUrl)
+                    .headers(requestHeaders)
+                    .method(HttpMethod.DELETE);
+
+            request = requestBuilder.build();
+        } else {
             HttpUrl requestUrl = new HttpUrl(uploadUrl);
 
             Request.Builder builder = new Request.Builder()
                     .url(requestUrl)
                     .method(HttpMethod.DELETE);
 
-            Request request = builder.build();
-            try (Response response = httpClient.execute(request)) {
-                // Handle errors
-                httpClient.throwExceptionForError(response);
-            }
-        } catch (IntegrationException | IOException ex) {
+            request = builder.build();
+        }
+
+        try {
+            // Handle errors
+            Response response = httpClient.execute(request);
+            httpClient.throwExceptionForError(response);
+        } catch (IntegrationException ex) {
             logger.error("Error canceling upload");
             logger.error("Cause: {}", ex.getMessage());
             logger.debug("Cause: ", ex);
         }
-        isCanceled = true;
+        isCanceled.set(true);
     }
 
     private void verifyAllPartsUploaded(MultipartUploadFileMetadata multipartUploadFileMetaData, Map<Integer, String> uploadedParts) throws IntegrationException {

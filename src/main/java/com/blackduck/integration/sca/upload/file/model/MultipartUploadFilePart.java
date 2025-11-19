@@ -22,6 +22,8 @@ public class MultipartUploadFilePart {
     private final long startByteRange;
     private final int chunkSize;
     private final Path filePath;
+    private MultipartUrlData partUploadData = null;
+    private Integer partNumber = null;
 
     /**
      * Constructor for the file part object.
@@ -40,6 +42,17 @@ public class MultipartUploadFilePart {
         this.startByteRange = startByteRange;
         this.chunkSize = chunkSize;
         this.filePath = filePath;
+    }
+
+    public MultipartUploadFilePart(UUID tagId, String checksum, int index, long startByteRange, int chunkSize, Path filePath, MultipartUrlData partUploadData, Integer partNumber) {
+        this.tagId = tagId;
+        this.checksum = checksum;
+        this.index = index;
+        this.startByteRange = startByteRange;
+        this.chunkSize = chunkSize;
+        this.filePath = filePath;
+        this.partUploadData = partUploadData;
+        this.partNumber = partNumber;
     }
 
     /**
@@ -94,6 +107,24 @@ public class MultipartUploadFilePart {
      */
     public Path getFilePath() {
         return filePath;
+    }
+
+    /**
+     * Retrieve the signedUrl for the chunk.
+     *
+     * @return chunk upload Url
+     */
+    public MultipartUrlData getPartUploadData() {
+        return partUploadData;
+    }
+
+    /**
+     * Retrieve the part number for the chunk.
+     *
+     * @return chunk part number
+     */
+    public Integer getPartNumber() {
+        return partNumber;
     }
 
     @Override

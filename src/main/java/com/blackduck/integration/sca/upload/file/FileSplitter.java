@@ -21,6 +21,7 @@ import java.util.Base64;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
+import java.util.zip.CRC32C;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
@@ -121,5 +122,21 @@ public class FileSplitter {
         try (InputStream is = Files.newInputStream(uploadFilePath)) {
             return Base64.getEncoder().encodeToString(DigestUtils.md5(is));
         }
+    }
+
+    public String computeCRC32CChecksum(Path filePath) throws IOException {
+        CRC32C crc32c = new CRC32C();
+        try (InputStream is = Files.newInputStream(filePath)) {
+            byte[] buffer = new byte[DIGEST_MAX_CHUNK_SIZE];
+            int bytesRead;
+            while ((bytesRead = is.read(buffer)) != -1) {
+                crc32c.update(buffer, 0, bytesRead);
+            }
+        }
+
+        ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+        buffer.putLong(crc32c.getValue());
+
+        return Base64.getEncoder().encodeToString(buffer.array());
     }
 }
