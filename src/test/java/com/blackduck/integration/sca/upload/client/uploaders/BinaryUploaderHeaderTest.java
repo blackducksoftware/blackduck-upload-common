@@ -26,6 +26,7 @@ class BinaryUploaderHeaderTest {
     private static final String EXPECTED_STATUS_MESSAGE = "Created";
     
     private static final String[] ETAG_VARIANTS = {"ETag", "Etag"}; // Case variations for testing
+    private static final String[] LOCATION_VARIANTS = {"Location", "location", "LOCATION"};
 
     @Test
     void testCreateUploadStatus_CaseInsensitiveETag() throws Exception {
@@ -57,5 +58,36 @@ class BinaryUploaderHeaderTest {
         }
 
         verify(mockResponse, times(expectedHeadersCalls)).getHeaders();
+    }
+
+    @Test
+    void testCreateUploadStatus_CaseInsensitiveLocation() throws Exception {
+        FileUploader mockFileUploader = mock(FileUploader.class);
+        UploadValidator mockUploadValidator = mock(UploadValidator.class);
+        BinaryScanRequestData mockBinaryScanRequestData = mock(BinaryScanRequestData.class);
+        Response mockResponse = mock(Response.class);
+
+        BinaryUploader binaryUploader = new BinaryUploader(1000, mockFileUploader, mockUploadValidator, mockBinaryScanRequestData);
+
+        int expectedHeadersCalls = LOCATION_VARIANTS.length;
+        for (String locationVariant : LOCATION_VARIANTS) {
+            Map<String, String> headers = new HashMap<>();
+            headers.put(locationVariant, LOCATION_URL);
+            headers.put(HttpHeaders.ETAG, EXPECTED_ETAG);
+
+            when(mockResponse.getStatusCode()).thenReturn(EXPECTED_STATUS_CODE);
+            when(mockResponse.getStatusMessage()).thenReturn(EXPECTED_STATUS_MESSAGE);
+            when(mockResponse.getHeaders()).thenReturn(headers);
+
+            BinaryUploadStatus status = binaryUploader.createUploadStatus().apply(mockResponse);
+
+            assertEquals(EXPECTED_STATUS_CODE, status.getStatusCode());
+            assertEquals(EXPECTED_STATUS_MESSAGE, status.getStatusMessage());
+            assertTrue(status.getResponseContent().isPresent(), "Response content should be present");
+            assertEquals(LOCATION_URL, status.getResponseContent().orElseThrow().getLocation());
+            assertEquals(EXPECTED_ETAG, status.getResponseContent().orElseThrow().getETag());
+        }
+
+        verify(mockResponse, times(LOCATION_VARIANTS.length)).getHeaders();
     }
 }
