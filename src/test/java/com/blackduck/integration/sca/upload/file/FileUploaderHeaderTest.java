@@ -23,7 +23,7 @@ import com.blackduck.integration.sca.upload.rest.status.MutableResponseStatus;
 import com.google.gson.Gson;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class FileUploaderHeaderTest {
+class FileUploaderHeaderTest {
     private static Map<String, String> responseHeaders;
     private BlackDuckHttpClient mockHttpClient;
     private FileUploader uploader;
@@ -43,7 +43,7 @@ public class FileUploaderHeaderTest {
         responseHeaders.put("x-xss-protection", "1; mode=block, 1; mode=block");
         responseHeaders.put("referrer-policy", "no-referrer-when-downgrade");
         responseHeaders.put("connection", "keep-alive");
-        responseHeaders.put("location", "https://10.255.185.169/api/storage/bdba/a7ca431b-6f3b-4ebf-ab00-6e998f2fe6ef/multipart");
+        responseHeaders.put("location", "https://mock-server.internal/api/storage/bdba/a7ca431b-6f3b-4ebf-ab00-6e998f2fe6ef/multipart");
         responseHeaders.put("cache-control", "no-cache, no-store, max-age=0, must-revalidate, no-store, no-cache, must-revalidate");
     }
 
@@ -56,7 +56,7 @@ public class FileUploaderHeaderTest {
     }
 
     @Test
-    public void testStartMultipartUploadHandlesLocationHeaderCaseInsensitively() throws Exception {
+    void testStartMultipartUploadHandlesLocationHeaderCaseInsensitively() throws Exception {
         Response mockResponse = mock(Response.class);
         when(mockResponse.getStatusCode()).thenReturn(201);
         when(mockResponse.getStatusMessage()).thenReturn("Created");
@@ -73,7 +73,7 @@ public class FileUploaderHeaderTest {
 
         String uploadUrl = uploader.startMultipartUpload(status, headers, "application/vnd.blackducksoftware.multipart-upload-start-1+json", startRequest);
 
-        assertEquals("https://10.255.185.169/api/storage/bdba/a7ca431b-6f3b-4ebf-ab00-6e998f2fe6ef/multipart", uploadUrl);
+        assertEquals("https://mock-server.internal/api/storage/bdba/a7ca431b-6f3b-4ebf-ab00-6e998f2fe6ef/multipart", uploadUrl);
         assertEquals(201, status.getStatusCode());
         assertEquals("Created", status.getStatusMessage());
 
@@ -83,7 +83,7 @@ public class FileUploaderHeaderTest {
     }
 
     @Test
-    public void testStartMultipartUploadMissingLocationHeader() throws Exception {
+    void testStartMultipartUploadMissingLocationHeader() throws Exception {
         Map<String, String> headersWithoutLocation = new HashMap<>();
         headersWithoutLocation.put("date", "Tue, 18 Nov 2025 07:18:56 GMT");
         headersWithoutLocation.put("server", "nginx");
@@ -116,7 +116,7 @@ public class FileUploaderHeaderTest {
     }
 
     @Test
-    public void testStartMultipartUploadHttpError() throws Exception {
+    void testStartMultipartUploadHttpError() throws Exception {
         Response mockResponse = mock(Response.class);
         when(mockResponse.getStatusCode()).thenReturn(500);
         when(mockResponse.getStatusMessage()).thenReturn("Internal Server Error");
