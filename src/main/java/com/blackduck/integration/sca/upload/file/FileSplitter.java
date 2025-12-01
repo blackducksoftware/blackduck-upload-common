@@ -38,6 +38,11 @@ public class FileSplitter {
     public static final String UPLOAD_CACHE = "/upload-cache";
     public static final int DIGEST_MAX_CHUNK_SIZE = 1024 * 1024 * 256;
 
+    public enum CheckSum {
+        CRC32C,
+        MD5
+    }
+
     /**
      * Splits the file and creates the {@link MultipartUploadFileMetadata} needed to perform a multipart upload.
      *
@@ -46,19 +51,24 @@ public class FileSplitter {
      * @return {@link MultipartUploadFileMetadata}
      * @throws IOException if the file does not exist in the given path.
      */
-    public MultipartUploadFileMetadata splitFile(Path uploadFilePath, int chunkSize) throws IOException {
+    public MultipartUploadFileMetadata splitFile(Path uploadFilePath, int chunkSize, Enum checkSumType) throws IOException {
         if (!uploadFilePath.toFile().exists()) {
             throw new FileNotFoundException(String.format("Invalid file path, could not find file to split: %s", uploadFilePath.getFileName()));
         }
         String uploadedFileName = uploadFilePath.toFile().getName();
         long fileSize = Files.size(uploadFilePath);
-        String checksum = toMD5Checksum(uploadFilePath);
+        String checksum;
+        if (checkSumType == CheckSum.CRC32C) {
+            checksum = computeCRC32CChecksum(uploadFilePath);
+        } else {
+            checksum = toMD5Checksum(uploadFilePath);
+        }
         UUID uploadId = UUID.randomUUID();
-        List<MultipartUploadFilePart> chunkList = createParts(uploadFilePath, chunkSize);
+        List<MultipartUploadFilePart> chunkList = createParts(uploadFilePath, chunkSize, checkSumType);
         return new MultipartUploadFileMetadata(uploadedFileName, checksum, uploadId, fileSize, chunkSize, chunkList);
     }
 
-    private List<MultipartUploadFilePart> createParts(Path uploadFilePath, int chunkSize) throws IOException {
+    private List<MultipartUploadFilePart> createParts(Path uploadFilePath, int chunkSize, Enum checkSumType) throws IOException {
         List<MultipartUploadFilePart> partList = new LinkedList<>();
         int index = 0;
         long fileSize = Files.size(uploadFilePath);
@@ -66,7 +76,12 @@ public class FileSplitter {
         long startOffset = 0;
         while (index < numberOfChunks) {
             UUID tagId = UUID.randomUUID();
-            String encodedChecksum = computePartMD5Checksum(uploadFilePath, startOffset, chunkSize);
+            String encodedChecksum;
+            if (checkSumType == CheckSum.CRC32C) {
+                encodedChecksum = computePartCRC32Checksum(uploadFilePath, startOffset, chunkSize);
+            } else {
+                encodedChecksum = computePartMD5Checksum(uploadFilePath, startOffset, chunkSize);
+            }
             MultipartUploadFilePart multipartUploadFilePart;
             if(index == numberOfChunks - 1) {
                 Long remainingSize = fileSize - startOffset;
@@ -112,6 +127,48 @@ public class FileSplitter {
             }
             partChecksum = Base64.getEncoder().encodeToString(messageDigest.digest());
         } catch (NoSuchAlgorithmException e) {
+            throw new IOException("Cannot validate checksum of the part: ", e);
+        }
+
+        return partChecksum;
+    }
+
+    private String computePartCRC32Checksum(Path uploadFilePath, long startOffset, int chunkSize) throws IOException {
+        String partChecksum = "";
+        long position = startOffset;
+        try (RandomAccessFile uploadFile = new RandomAccessFile(uploadFilePath.toFile(), "r")) {
+            uploadFile.seek(startOffset);
+            FileChannel fileChannel = uploadFile.getChannel();
+            // if the chunk size is less than 256MB use it, otherwise use a chunk size that is smaller than 256MB.
+            // This will allow the max chunk size of 2GB to be handled appropriately.
+            // Compute the chunk size used for calculating the checksum.  Divide the chunksize by the maximum chunk size allowed to determine the quotient.
+            // Then divide the chunksize by the quotient to ensure a byte buffer allocation will not cause bytes to be read beyond the endOffset.
+            // This will ensure the correct checksum because bytes read will remain between the startOffset and the endOffset when computing the checksum.
+            int digestChunkSize = chunkSize;
+            if(chunkSize > DIGEST_MAX_CHUNK_SIZE) {
+                int result = (int) Math.ceil((double) chunkSize / DIGEST_MAX_CHUNK_SIZE);
+                digestChunkSize = chunkSize / result;
+            }
+
+            ByteBuffer buff = ByteBuffer.allocate(digestChunkSize);
+            long endOffset = startOffset + chunkSize;
+            int numberOfBytesRead = fileChannel.read(buff);
+            long remainingBytes = endOffset - position;
+            CRC32C crc32c = new CRC32C();
+
+            while (numberOfBytesRead > -1 && remainingBytes > 0) {
+                crc32c.update(buff.array(), 0, numberOfBytesRead);
+                buff.clear();
+                // check if the end of the range has been read or not.
+                position += numberOfBytesRead;
+                remainingBytes = endOffset - position;
+                numberOfBytesRead = fileChannel.read(buff);
+            }
+
+            ByteBuffer byteBuffer = ByteBuffer.allocate(Long.BYTES);
+            byteBuffer.putLong(crc32c.getValue());
+            partChecksum = Base64.getEncoder().encodeToString(byteBuffer.array());
+        } catch (RuntimeException e) {
             throw new IOException("Cannot validate checksum of the part: ", e);
         }
 

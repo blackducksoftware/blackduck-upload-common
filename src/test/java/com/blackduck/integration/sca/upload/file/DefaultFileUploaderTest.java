@@ -54,7 +54,7 @@ class DefaultFileUploaderTest {
         RandomByteContentFileGenerator randomByteContentFileGenerator = new RandomByteContentFileGenerator();
         long fileSize = 1024 * 1024 * 100L;
         Path generatedSampleFilePath = randomByteContentFileGenerator.generateFile(fileSize, ".bin").orElseThrow(() -> new IOException("Could not generate file"));
-        metaData = new FileSplitter().splitFile(generatedSampleFilePath, CHUNK_SIZE);
+        metaData = new FileSplitter().splitFile(generatedSampleFilePath, CHUNK_SIZE, FileSplitter.CheckSum.MD5);
     }
 
     @BeforeEach

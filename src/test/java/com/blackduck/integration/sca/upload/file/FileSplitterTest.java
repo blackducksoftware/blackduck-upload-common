@@ -67,7 +67,7 @@ class FileSplitterTest {
     void splitFileTest() throws IOException {
         FileSplitter fileSplitter = new FileSplitter();
 
-        MultipartUploadFileMetadata multipartUploadFileMetadata = fileSplitter.splitFile(generatedSampleFilePath, chunkSize);
+        MultipartUploadFileMetadata multipartUploadFileMetadata = fileSplitter.splitFile(generatedSampleFilePath, chunkSize, FileSplitter.CheckSum.MD5);
         //length returns the size of the file in bytes. 100 MB for this test case
         long size = generatedSampleFilePath.toAbsolutePath().toFile().length();
         int expectedNumberOfChunks = (int) (size / chunkSize);
@@ -83,7 +83,7 @@ class FileSplitterTest {
 
         Path testPath = Path.of("./this/path/should/not/exist/");
         assertFalse(testPath.toFile().exists());
-        assertThrows(FileNotFoundException.class, () -> fileSplitter.splitFile(testPath, chunkSize));
+        assertThrows(FileNotFoundException.class, () -> fileSplitter.splitFile(testPath, chunkSize, FileSplitter.CheckSum.MD5));
     }
 
     @Test
@@ -102,7 +102,7 @@ class FileSplitterTest {
             }
 
             assertTrue(testPath.toFile().exists());
-            assertThrows(IOException.class, () -> fileSplitter.splitFile(testFile.toPath(), chunkSize));
+            assertThrows(IOException.class, () -> fileSplitter.splitFile(testFile.toPath(), chunkSize, FileSplitter.CheckSum.MD5));
         } finally {
             cleanUpDirectory(testPath);
         }
@@ -123,7 +123,7 @@ class FileSplitterTest {
                 testFile.setWritable(false);
             }
 
-            MultipartUploadFileMetadata multipartUploadFileMetadata = fileSplitter.splitFile(testFile.toPath(), chunkSize);
+            MultipartUploadFileMetadata multipartUploadFileMetadata = fileSplitter.splitFile(testFile.toPath(), chunkSize, FileSplitter.CheckSum.MD5);
 
             assertTrue(testPath.toFile().exists());
             assertEquals(1, multipartUploadFileMetadata.getFileChunks().size());

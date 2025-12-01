@@ -168,7 +168,7 @@ class DefaultFileUploaderTestIT {
 
     @Test
     void testMultipartUpload() throws Exception {
-        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize);
+        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize, FileSplitter.CheckSum.MD5);
 
         DefaultFileUploader fileUploader = new DefaultFileUploader(httpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, uploadTimeoutMinutes);
         Map<String, String> startRequestHeaders = Map.of(HttpHeaders.CONTENT_TYPE, ContentTypes.APPLICATION_BINARY_MULTIPART_UPLOAD_START_V1);
@@ -193,7 +193,7 @@ class DefaultFileUploaderTestIT {
 
     @Test
     void testMultipartUploadFailure() throws Exception {
-        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize);
+        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize, FileSplitter.CheckSum.MD5);
 
         //Modify the part list to create an invalid checksum on one of the parts.
         MultipartUploadFileMetadata invalidMetadata = new MultipartUploadFileMetadata(
@@ -233,7 +233,7 @@ class DefaultFileUploaderTestIT {
     // Multipart upload tests
     @Test
     void testMultipartUploadStart() throws Exception {
-        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize);
+        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize, FileSplitter.CheckSum.MD5);
         MutableResponseStatus mutableResponseStatus = new MutableResponseStatus(-1, "unknown status message");
 
         DefaultFileUploader fileUploader = new DefaultFileUploader(httpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, uploadTimeoutMinutes);
@@ -250,7 +250,7 @@ class DefaultFileUploaderTestIT {
 
     @Test
     void testMultipartUploadParts() throws Exception {
-        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize);
+        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize, FileSplitter.CheckSum.MD5);
         MutableResponseStatus mutableResponseStatus = new MutableResponseStatus(-1, "unknown status message");
 
         DefaultFileUploader fileUploader = new DefaultFileUploader(httpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, uploadTimeoutMinutes);
@@ -269,7 +269,7 @@ class DefaultFileUploaderTestIT {
 
     @Test
     void testMultipartUploadPartsFail() throws Exception {
-        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize);
+        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize, FileSplitter.CheckSum.MD5);
         MutableResponseStatus mutableResponseStatus = new MutableResponseStatus(-1, "unknown status message");
 
         BlackDuckHttpClient incorrectHttpClient = new BlackDuckHttpClient(
@@ -309,7 +309,7 @@ class DefaultFileUploaderTestIT {
 
     @Test
     void testUploadCancel() throws Exception {
-        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize);
+        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize, FileSplitter.CheckSum.MD5);
         MutableResponseStatus mutableResponseStatus = new MutableResponseStatus(-1, "unknown status message");
 
         //Modify the part list to create an invalid checksum on one of the parts.
@@ -350,7 +350,7 @@ class DefaultFileUploaderTestIT {
 
     @Test
     void testMultipartUploadFinish() throws Exception {
-        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize);
+        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize, FileSplitter.CheckSum.MD5);
         MutableResponseStatus mutableResponseStatus = new MutableResponseStatus(-1, "unknown status message");
 
         DefaultFileUploader fileUploader = new DefaultFileUploader(httpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, uploadTimeoutMinutes);
@@ -376,7 +376,7 @@ class DefaultFileUploaderTestIT {
 
     @Test
     void testFinishBadChecksum() throws Exception {
-        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize);
+        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize, FileSplitter.CheckSum.MD5);
         MutableResponseStatus mutableResponseStatus = new MutableResponseStatus(-1, "unknown status message");
 
         //Modify the part list to create an invalid checksum on one of the parts.
@@ -409,7 +409,7 @@ class DefaultFileUploaderTestIT {
 
     @Test
     void testMultipartUploadTimeOut() throws Exception {
-        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize);
+        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize, FileSplitter.CheckSum.MD5);
 
         // Set timeout to 0 minutes to terminate executor service immediately
         DefaultFileUploader fileUploader = new DefaultFileUploader(httpClient, uploadRequestPaths, retryAttempts, retryInitialInterval, 0);
@@ -431,7 +431,7 @@ class DefaultFileUploaderTestIT {
 
     @Test
     void testMultipartUploadRestException() throws Exception {
-        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize);
+        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize, FileSplitter.CheckSum.MD5);
         MutableResponseStatus mutableResponseStatus = new MutableResponseStatus(-1, "unknown status message");
 
         IntegrationRestException integrationRestException = new IntegrationRestException(HttpMethod.PUT, blackduckUrl, 412, "Test Failure", "Response content", "Response message");
@@ -467,7 +467,7 @@ class DefaultFileUploaderTestIT {
 
     @Test
     void testMultipartUpload429Retry() throws Exception {
-        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize);
+        MultipartUploadFileMetadata metaData = fileSplitter.splitFile(generatedSampleFilePath, chunkSize, FileSplitter.CheckSum.MD5);
         MutableResponseStatus mutableResponseStatus = new MutableResponseStatus(-1, "unknown status message");
 
         // Setup 429 exception

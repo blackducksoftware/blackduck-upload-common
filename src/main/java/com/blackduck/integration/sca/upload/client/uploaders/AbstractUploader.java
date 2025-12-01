@@ -92,7 +92,7 @@ public abstract class AbstractUploader<T extends UploadStatus> {
 
     private T partitionAndUploadFile(Path uploadFilePath) throws IOException, IntegrationException {
         logger.info("Start of calculate for file offsets.");
-        MultipartUploadFileMetadata multipartUploadFileMetadata = fileSplitter.splitFile(uploadFilePath, chunkSize);
+        MultipartUploadFileMetadata multipartUploadFileMetadata = fileSplitter.splitFile(uploadFilePath, chunkSize, FileSplitter.CheckSum.MD5);
         logger.info("Finish of calculate for file offsets.");
         return fileUploader.multipartUpload(
             multipartUploadFileMetadata,
