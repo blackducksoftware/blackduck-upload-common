@@ -89,9 +89,9 @@ public class UploaderFactory {
      */
     public ScassUploader createScassUploaderWithProxyInfo() {
         return new ScassUploader(createScassHttpClientWithProxyInfo(), createUploadValidator(),
-                uploaderConfig.getUploadChunkSize(),
-                uploaderConfig.getMultipartUploadPartRetryInitialInterval(),
-                uploaderConfig.getMultipartUploadPartRetryAttempts()
+            uploaderConfig.getUploadChunkSize(),
+            uploaderConfig.getMultipartUploadPartRetryInitialInterval(),
+            uploaderConfig.getMultipartUploadPartRetryAttempts()
         );
     }
 
@@ -129,10 +129,10 @@ public class UploaderFactory {
 
     private IntHttpClient createScassHttpClientWithProxyInfo() {
         return new IntHttpClient(
-                intLogger,
-                gson,
-                uploaderConfig.getBlackDuckTimeoutInSeconds(),
-                uploaderConfig.isAlwaysTrustServerCertificate(),
+            intLogger,
+            gson,
+            uploaderConfig.getBlackDuckTimeoutInSeconds(),
+            uploaderConfig.isAlwaysTrustServerCertificate(),
                 this.uploaderConfig.getProxyInfo()
         );
     }
