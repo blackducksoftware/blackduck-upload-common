@@ -95,6 +95,14 @@ public class UploaderFactory {
         );
     }
 
+    public ScassUploader createScassUploaderWithProxyInfo() {
+        return new ScassUploader(createScassHttpClientWithProxyInfo(), createUploadValidator(),
+                uploaderConfig.getUploadChunkSize(),
+                uploaderConfig.getMultipartUploadPartRetryInitialInterval(),
+                uploaderConfig.getMultipartUploadPartRetryAttempts()
+        );
+    }
+
     // TODO: Make public along with uncommenting test when ready
     private ReversingLabUploader createReversingLabUploader(String urlPrefix) {
         return new ReversingLabUploader(uploaderConfig.getUploadChunkSize(), createFileUploader(urlPrefix), createUploadValidator());
@@ -134,6 +142,16 @@ public class UploaderFactory {
             uploaderConfig.getBlackDuckTimeoutInSeconds(),
             uploaderConfig.isAlwaysTrustServerCertificate(),
             ProxyInfo.NO_PROXY_INFO
+        );
+    }
+
+    private IntHttpClient createScassHttpClientWithProxyInfo() {
+        return new IntHttpClient(
+                intLogger,
+                gson,
+                uploaderConfig.getBlackDuckTimeoutInSeconds(),
+                uploaderConfig.isAlwaysTrustServerCertificate(),
+                this.uploaderConfig.getProxyInfo()
         );
     }
 
