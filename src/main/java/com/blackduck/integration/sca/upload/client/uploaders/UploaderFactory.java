@@ -87,14 +87,6 @@ public class UploaderFactory {
      * Construct the uploader for SCASS uploads.
      * @return the {@link ScassUploader} created.
      */
-    public ScassUploader createScassUploader() {
-        return new ScassUploader(createScassHttpClient(), createUploadValidator(),
-            uploaderConfig.getUploadChunkSize(),
-            uploaderConfig.getMultipartUploadPartRetryInitialInterval(),
-            uploaderConfig.getMultipartUploadPartRetryAttempts()
-        );
-    }
-
     public ScassUploader createScassUploaderWithProxyInfo() {
         return new ScassUploader(createScassHttpClientWithProxyInfo(), createUploadValidator(),
                 uploaderConfig.getUploadChunkSize(),
@@ -132,16 +124,6 @@ public class UploaderFactory {
             uploaderConfig.getProxyInfo(),
             uploaderConfig.getBlackDuckUrl(),
             uploaderConfig.getApiToken()
-        );
-    }
-
-    private IntHttpClient createScassHttpClient() {
-        return new IntHttpClient(
-            intLogger,
-            gson,
-            uploaderConfig.getBlackDuckTimeoutInSeconds(),
-            uploaderConfig.isAlwaysTrustServerCertificate(),
-            ProxyInfo.NO_PROXY_INFO
         );
     }
 
