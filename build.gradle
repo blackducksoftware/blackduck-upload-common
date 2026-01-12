@@ -1,6 +1,6 @@
 buildscript {
     apply from: 'https://raw.githubusercontent.com/blackducksoftware/integration-resources/master/gradle_common/buildscript-repositories.gradle', to: buildscript
-    project.ext { managedCgpVersion = '2.1.1' }
+    apply from: 'https://raw.githubusercontent.com/blackducksoftware/integration-resources/master/gradle_common/buildscript-cgp-version.gradle'
 
     dependencies { classpath "com.blackduck.integration:common-gradle-plugin:${managedCgpVersion}" }
 }
@@ -19,7 +19,7 @@ tasks.compileJava {
 }
 
 group 'com.blackduck.integration'
-version = '4.1.4'
+version = '4.1.5-SNAPSHOT'
 
 apply plugin: 'com.blackduck.integration.library'
 
