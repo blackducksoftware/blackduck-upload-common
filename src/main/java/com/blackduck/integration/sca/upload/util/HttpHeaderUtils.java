@@ -15,10 +15,6 @@ import java.util.Map;
  */
 public class HttpHeaderUtils {
 
-    private HttpHeaderUtils() {
-        // Utility class, prevent instantiation
-    }
-
     /**
      * Performs a case-insensitive lookup of a header value in a map.
      * HTTP headers are case-insensitive per RFC 2616, but HashMap is case-sensitive.
