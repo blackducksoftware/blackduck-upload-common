@@ -32,6 +32,7 @@ import com.blackduck.integration.rest.client.IntHttpClient;
 import com.blackduck.integration.rest.request.Request;
 import com.blackduck.integration.rest.response.Response;
 import com.blackduck.integration.sca.upload.rest.status.ScassUploadStatus;
+import com.blackduck.integration.sca.upload.util.HttpHeaderUtils;
 import com.blackduck.integration.sca.upload.validation.UploadValidator;
 
 /**
@@ -121,7 +122,7 @@ public class ScassUploader {
         String uploadUrl = null;
         try (Response response = initiateResumableUpload(signedUrl, headers)) {
             if (response.getStatusCode() == HttpStatus.SC_CREATED) {
-                uploadUrl = response.getHeaders().get(HttpHeaders.LOCATION); // This is the resumable session URL
+                uploadUrl = HttpHeaderUtils.getHeaderCaseInsensitive(response.getHeaders(), HttpHeaders.LOCATION); // This is the resumable session URL
             } else {
                 String errorMessage = String.format("Failed to initiate resumable upload. Returned status is %s. Returned status message is %s.",
                     response.getStatusCode(), response.getStatusMessage()
@@ -219,7 +220,7 @@ public class ScassUploader {
                 } else if (response.getStatusCode() == PERMANENT_REDIRECT) {
                     // Chunk was uploaded successfully, GCS waits for next chunk
                     Map<String, String> responseHeaders = response.getHeaders();
-                    String range = responseHeaders.get(HttpHeaders.RANGE);
+                    String range = HttpHeaderUtils.getHeaderCaseInsensitive(responseHeaders, HttpHeaders.RANGE);
                     if (range != null) {
                         String[] rangeParts = range.split("-");
                         // offset should be taken from response, since that indicates the last byte that was really stored in GCS bucket

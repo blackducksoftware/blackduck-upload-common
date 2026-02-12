@@ -12,7 +12,6 @@ import java.io.RandomAccessFile;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -44,6 +43,7 @@ import com.blackduck.integration.sca.upload.rest.model.ContentTypes;
 import com.blackduck.integration.sca.upload.rest.model.request.MultipartUploadStartRequest;
 import com.blackduck.integration.sca.upload.rest.status.MutableResponseStatus;
 import com.blackduck.integration.sca.upload.rest.status.UploadStatus;
+import com.blackduck.integration.sca.upload.util.HttpHeaderUtils;
 import com.blackduck.integration.sca.upload.validation.UploadValidator;
 import com.google.gson.Gson;
 
@@ -191,12 +191,9 @@ public class FileUploader {
             // Handle errors
             httpClient.throwExceptionForError(response);
 
-
             Map<String, String> responseHeaders = response.getHeaders();
-            Map<String, String> caseInsensitiveResponseHeaders = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-            caseInsensitiveResponseHeaders.putAll(responseHeaders);
-
-            return Optional.ofNullable(caseInsensitiveResponseHeaders.get(HttpHeaders.LOCATION)).orElseThrow(() -> new IntegrationException("Could not find Location header."));
+            return Optional.ofNullable(HttpHeaderUtils.getHeaderCaseInsensitive(responseHeaders, HttpHeaders.LOCATION))
+                .orElseThrow(() -> new IntegrationException("Could not find Location header."));
         } catch (IOException ex) {
             throw new IntegrationException(CLOSE_RESPONSE_OBJECT_MESSAGE + ex.getCause(), ex);
         }

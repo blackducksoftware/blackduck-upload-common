@@ -233,4 +233,76 @@ public class ScassUploaderTest {
         Mockito.when(response.getContentString()).thenReturn(content);
     }
 
+    @Test
+    public void testLocationHeaderLowercase() throws Exception {
+        Response initialResponse = Mockito.mock(Response.class);
+        Mockito.when(initialResponse.getStatusCode()).thenReturn(HttpStatus.SC_CREATED);
+        Mockito.when(initialResponse.getHeaders()).thenReturn(Map.of("location", "https://example.com/upload/resumable"));
+
+        Response chunkResponse = Mockito.mock(Response.class);
+        Mockito.when(chunkResponse.getStatusCode()).thenReturn(HttpStatus.SC_OK);
+
+        Mockito.when(client.execute(any(Request.class))).thenReturn(initialResponse, chunkResponse);
+
+        ScassUploadStatus status = scassUploader.upload(HttpMethod.POST, SIGNED_URL, HEADERS, UPLOADED_FILE_PATH);
+
+        assertEquals(HttpStatus.SC_OK, status.getStatusCode());
+    }
+
+    @Test
+    public void testLocationHeaderUppercase() throws Exception {
+        Response initialResponse = Mockito.mock(Response.class);
+        Mockito.when(initialResponse.getStatusCode()).thenReturn(HttpStatus.SC_CREATED);
+        Mockito.when(initialResponse.getHeaders()).thenReturn(Map.of("Location", "https://example.com/upload/resumable"));
+
+        Response chunkResponse = Mockito.mock(Response.class);
+        Mockito.when(chunkResponse.getStatusCode()).thenReturn(HttpStatus.SC_OK);
+
+        Mockito.when(client.execute(any(Request.class))).thenReturn(initialResponse, chunkResponse);
+
+        ScassUploadStatus status = scassUploader.upload(HttpMethod.POST, SIGNED_URL, HEADERS, UPLOADED_FILE_PATH);
+
+        assertEquals(HttpStatus.SC_OK, status.getStatusCode());
+    }
+
+    @Test
+    public void testRangeHeaderLowercase() throws Exception {
+        Response initialResponse = Mockito.mock(Response.class);
+        Mockito.when(initialResponse.getStatusCode()).thenReturn(HttpStatus.SC_CREATED);
+        Mockito.when(initialResponse.getHeaders()).thenReturn(Map.of(HttpHeaders.LOCATION, "https://example.com/upload/resumable"));
+
+        Response chunkResponse = Mockito.mock(Response.class);
+        Mockito.when(chunkResponse.getStatusCode()).thenReturn(ScassUploader.PERMANENT_REDIRECT);
+        Mockito.when(chunkResponse.getHeaders()).thenReturn(Map.of("range", "bytes=0-100"));
+
+        Response finalResponse = Mockito.mock(Response.class);
+        Mockito.when(finalResponse.getStatusCode()).thenReturn(HttpStatus.SC_OK);
+
+        Mockito.when(client.execute(any(Request.class))).thenReturn(initialResponse, chunkResponse, finalResponse);
+
+        ScassUploadStatus status = scassUploader.upload(HttpMethod.POST, SIGNED_URL, HEADERS, UPLOADED_FILE_PATH);
+
+        assertEquals(HttpStatus.SC_OK, status.getStatusCode());
+    }
+
+    @Test
+    public void testRangeHeaderUppercase() throws Exception {
+        Response initialResponse = Mockito.mock(Response.class);
+        Mockito.when(initialResponse.getStatusCode()).thenReturn(HttpStatus.SC_CREATED);
+        Mockito.when(initialResponse.getHeaders()).thenReturn(Map.of(HttpHeaders.LOCATION, "https://example.com/upload/resumable"));
+
+        Response chunkResponse = Mockito.mock(Response.class);
+        Mockito.when(chunkResponse.getStatusCode()).thenReturn(ScassUploader.PERMANENT_REDIRECT);
+        Mockito.when(chunkResponse.getHeaders()).thenReturn(Map.of("Range", "bytes=0-100"));
+
+        Response finalResponse = Mockito.mock(Response.class);
+        Mockito.when(finalResponse.getStatusCode()).thenReturn(HttpStatus.SC_OK);
+
+        Mockito.when(client.execute(any(Request.class))).thenReturn(initialResponse, chunkResponse, finalResponse);
+
+        ScassUploadStatus status = scassUploader.upload(HttpMethod.POST, SIGNED_URL, HEADERS, UPLOADED_FILE_PATH);
+
+        assertEquals(HttpStatus.SC_OK, status.getStatusCode());
+    }
+
 }

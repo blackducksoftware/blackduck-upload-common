@@ -12,7 +12,6 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.TreeMap;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
@@ -33,6 +32,7 @@ import com.blackduck.integration.sca.upload.rest.model.response.BinaryFinishResp
 import com.blackduck.integration.sca.upload.rest.status.BinaryUploadStatus;
 import com.blackduck.integration.sca.upload.rest.status.MutableResponseStatus;
 import com.blackduck.integration.sca.upload.rest.status.UploadStatus;
+import com.blackduck.integration.sca.upload.util.HttpHeaderUtils;
 import com.blackduck.integration.sca.upload.validation.UploadValidator;
 
 /**
@@ -136,10 +136,7 @@ public class BinaryUploader extends AbstractUploader<BinaryUploadStatus> {
             String statusMessage = response.getStatusMessage();
 
             Map<String, String> responseHeaders = response.getHeaders();
-            Map<String, String> caseInsensitiveHeaders = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-            caseInsensitiveHeaders.putAll(responseHeaders);
-
-            String location = Optional.ofNullable(caseInsensitiveHeaders.get(HttpHeaders.LOCATION))
+            String location = Optional.ofNullable(HttpHeaderUtils.getHeaderCaseInsensitive(responseHeaders, HttpHeaders.LOCATION))
                 .orElseThrow(() -> new IntegrationException("Could not find Location header."));
             String eTag = responseHeaders.entrySet().stream()
                 .filter(entry -> entry.getKey().equalsIgnoreCase(HttpHeaders.ETAG))
