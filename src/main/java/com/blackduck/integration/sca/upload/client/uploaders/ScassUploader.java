@@ -121,7 +121,7 @@ public class ScassUploader {
         String uploadUrl = null;
         try (Response response = initiateResumableUpload(signedUrl, headers)) {
             if (response.getStatusCode() == HttpStatus.SC_CREATED) {
-                uploadUrl = response.getHeaders().get(HttpHeaders.LOCATION); // This is the resumable session URL
+                uploadUrl = getHeaderCaseInsensitive(response.getHeaders(), HttpHeaders.LOCATION); // This is the resumable session URL
             } else {
                 String errorMessage = String.format("Failed to initiate resumable upload. Returned status is %s. Returned status message is %s.",
                     response.getStatusCode(), response.getStatusMessage()
@@ -219,7 +219,7 @@ public class ScassUploader {
                 } else if (response.getStatusCode() == PERMANENT_REDIRECT) {
                     // Chunk was uploaded successfully, GCS waits for next chunk
                     Map<String, String> responseHeaders = response.getHeaders();
-                    String range = responseHeaders.get(HttpHeaders.RANGE);
+                    String range = getHeaderCaseInsensitive(responseHeaders, HttpHeaders.RANGE);
                     if (range != null) {
                         String[] rangeParts = range.split("-");
                         // offset should be taken from response, since that indicates the last byte that was really stored in GCS bucket
@@ -271,6 +271,46 @@ public class ScassUploader {
 
         // safe to cast since remaining bytes are less than chunk size, which is int
         return remainingBytes < chunkSize ? (int) remainingBytes : chunkSize;
+    }
+
+    /**
+     * Performs a case-insensitive lookup of a header value in a map.
+     * HTTP headers are case-insensitive per RFC 2616, but HashMap is case-sensitive.
+     * Tries exact match first for performance, then common variations, then full scan.
+     *
+     * @param headers the map of headers to search
+     * @param headerName the name of the header to find
+     * @return the header value if found, null otherwise
+     */
+    private String getHeaderCaseInsensitive(Map<String, String> headers, String headerName) {
+        if (headers == null || headerName == null) {
+            return null;
+        }
+
+        // Fast path: try exact match first
+        String value = headers.get(headerName);
+        if (value != null) {
+            return value;
+        }
+
+        // Try common variations before full scan
+        value = headers.get(headerName.toLowerCase());
+        if (value != null) {
+            return value;
+        }
+
+        value = headers.get(headerName.toUpperCase());
+        if (value != null) {
+            return value;
+        }
+
+        // Fall back to case-insensitive search only if needed
+        for (Map.Entry<String, String> entry : headers.entrySet()) {
+            if (entry.getKey().equalsIgnoreCase(headerName)) {
+                return entry.getValue();
+            }
+        }
+        return null;
     }
 
 }
