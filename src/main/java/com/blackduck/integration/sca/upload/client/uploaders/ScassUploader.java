@@ -149,7 +149,7 @@ public class ScassUploader {
                 chunkHeaders.put(HttpHeaders.CONTENT_RANGE, rangeValue);
 
                 ScassUploadStatus status = uploadChunk(uploadUrl, chunkHeaders, chunk, offset);
-                if (status.getStatusCode() != HttpStatus.SC_OK && status.getStatusCode() != PERMANENT_REDIRECT) {
+                if (status.isError() || (status.getStatusCode() != HttpStatus.SC_OK && status.getStatusCode() != PERMANENT_REDIRECT)) {
                     // this is error status, so break the cycle and return it
                     return status;
                 }

@@ -227,6 +227,38 @@ public class ScassUploaderTest {
         Mockito.verify(chunkResponse3, times(1)).close();
     }
 
+    @Test
+    // Test that a 308 response missing the Range header causes an error rather than an infinite loop.
+    // When uploadChunk() gets a 308 but cannot find the Range header it throws, and the catch block
+    // returns the 308 status code alongside the exception. resumableUpload() must detect isError()
+    // so it does not treat the 308 as a successful intermediate chunk and loop forever from offset 0.
+    public void testWhenPostUploadChunkReturns308WithoutRangeHeader() throws Exception {
+        Response initialResponse = Mockito.mock(Response.class);
+        Mockito.when(initialResponse.getStatusCode()).thenReturn(HttpStatus.SC_CREATED);
+        Mockito.when(initialResponse.getHeaders()).thenReturn(Map.of(HttpHeaders.LOCATION, "https://example.com/upload/resumable"));
+
+        // 308 response with no Range header — simulates the bug scenario
+        Response chunkResponse = Mockito.mock(Response.class);
+        Mockito.when(chunkResponse.getStatusCode()).thenReturn(ScassUploader.PERMANENT_REDIRECT);
+        Mockito.when(chunkResponse.getHeaders()).thenReturn(new HashMap<>());
+        Mockito.when(chunkResponse.getStatusMessage()).thenReturn("Permanent Redirect");
+        Mockito.when(chunkResponse.getContentString()).thenReturn(ERROR_CONTENT);
+
+        // initial + (MULTIPART_UPLOAD_PART_RETRY_ATTEMPTS + 1) chunk attempts
+        Mockito.when(client.execute(any(Request.class))).thenReturn(
+            initialResponse,
+            chunkResponse, chunkResponse, chunkResponse
+        );
+
+        ScassUploadStatus status = scassUploader.upload(HttpMethod.POST, SIGNED_URL, HEADERS, UPLOADED_FILE_PATH);
+
+        assertEquals(ScassUploader.PERMANENT_REDIRECT, status.getStatusCode());
+        assertEquals(true, status.isError());
+
+        // Verify we only executed the expected number of requests and did not loop infinitely
+        Mockito.verify(client, times(1 + MULTIPART_UPLOAD_PART_RETRY_ATTEMPTS + 1)).execute(any(Request.class));
+    }
+
     private void mockResponse(Response response, int status, String statusMessage, String content) throws IntegrationException {
         Mockito.when(response.getStatusCode()).thenReturn(status);
         Mockito.when(response.getStatusMessage()).thenReturn(statusMessage);
