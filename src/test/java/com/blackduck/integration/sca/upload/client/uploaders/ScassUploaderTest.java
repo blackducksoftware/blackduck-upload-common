@@ -9,6 +9,7 @@
 package com.blackduck.integration.sca.upload.client.uploaders;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 
@@ -104,8 +105,31 @@ public class ScassUploaderTest {
         assertEquals(BAD_REQUEST_UPLOAD_STATUS.getContent(), status.getContent());
         assertEquals(integException, status.getException().get());
 
-        Mockito.verify(client, times(1)).execute(any(Request.class));
-        Mockito.verify(response, times(1)).close();
+        Mockito.verify(client, times(MULTIPART_UPLOAD_PART_RETRY_ATTEMPTS + 1)).execute(any(Request.class));
+        Mockito.verify(response, times(MULTIPART_UPLOAD_PART_RETRY_ATTEMPTS + 1)).close();
+    }
+
+    @Test
+    public void testWhenPutUploadSucceedsAfterRetry() throws Exception {
+        Response failResponse = Mockito.mock(Response.class);
+        mockResponse(failResponse, 500, "Internal Server Error", "Server Error");
+        IntegrationException transientError = new IntegrationException("transient error");
+        Mockito.doThrow(transientError).when(client).throwExceptionForError(failResponse);
+
+        Response successResponse = Mockito.mock(Response.class);
+        mockResponse(successResponse, 200, "OK", "Success");
+
+        Mockito.when(client.execute(Mockito.any(Request.class)))
+            .thenReturn(failResponse)
+            .thenReturn(successResponse);
+
+        ScassUploadStatus status = scassUploader.upload(HttpMethod.PUT, SIGNED_URL, HEADERS, UPLOADED_FILE_PATH);
+
+        assertEquals(200, status.getStatusCode());
+        assertFalse(status.isError());
+        Mockito.verify(client, times(2)).execute(any(Request.class));
+        Mockito.verify(failResponse, times(1)).close();
+        Mockito.verify(successResponse, times(1)).close();
     }
 
     @Test
@@ -118,7 +142,7 @@ public class ScassUploaderTest {
         assertEquals(-1, status.getStatusCode());
         assertEquals(integException, status.getException().get());
 
-        Mockito.verify(client, times(1)).execute(any(Request.class));
+        Mockito.verify(client, times(MULTIPART_UPLOAD_PART_RETRY_ATTEMPTS + 1)).execute(any(Request.class));
     }
 
     @Test
