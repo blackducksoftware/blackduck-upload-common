@@ -25,7 +25,8 @@ public enum EnvironmentProperties {
     BLACKDUCK_MULTIPART_UPLOAD_THRESHOLD("blackduck.multipart.upload.threshold", false),
     BLACKDUCK_MULTIPART_UPLOAD_PART_RETRY_ATTEMPTS("blackduck.multipart.upload.part.retry.attempts", false),
     BLACKDUCK_MULTIPART_UPLOAD_PART_RETRY_INITIAL_INTERVAL("blackduck.multipart.upload.part.retry.initial.interval", false),
-    BLACKDUCK_MULTIPART_UPLOAD_TIMEOUT_MINUTES("blackduck.multipart.upload.timeout.minutes", false);
+    BLACKDUCK_MULTIPART_UPLOAD_TIMEOUT_MINUTES("blackduck.multipart.upload.timeout.minutes", false),
+    BLACKDUCK_NON_RESUMABLE_UPLOAD_RETRY_ATTEMPTS("blackduck.non.resumable.upload.retry.attempts", false);
 
     private final String propertyKey;
     private final boolean isRequired;

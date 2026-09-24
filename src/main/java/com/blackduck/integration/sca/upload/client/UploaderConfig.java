@@ -41,6 +41,7 @@ public class UploaderConfig {
     private final int multipartUploadPartRetryAttempts;
     private final long multipartUploadPartRetryInitialInterval;
     private final int multipartUploadTimeoutInMinutes;
+    private final int nonResumableUploadRetryAttempts;
 
     /**
      * Static constructor to instantiate Builder using just {@link ProxyInfo}.
@@ -123,7 +124,8 @@ public class UploaderConfig {
         Long multipartUploadThreshold,
         int multipartUploadPartRetryAttempts,
         long multipartUploadPartRetryInitialInterval,
-        int multipartUploadTimeoutInMinutes
+        int multipartUploadTimeoutInMinutes,
+        int nonResumableUploadRetryAttempts
     ) {
         this.proxyInfo = proxyInfo;
         this.uploadChunkSize = uploadChunkSize;
@@ -135,6 +137,7 @@ public class UploaderConfig {
         this.multipartUploadPartRetryAttempts = multipartUploadPartRetryAttempts;
         this.multipartUploadPartRetryInitialInterval = multipartUploadPartRetryInitialInterval;
         this.multipartUploadTimeoutInMinutes = multipartUploadTimeoutInMinutes;
+        this.nonResumableUploadRetryAttempts = nonResumableUploadRetryAttempts;
     }
 
     /**
@@ -228,6 +231,15 @@ public class UploaderConfig {
     }
 
     /**
+     * Retrieve the retry attempts for a non-resumable (single PUT) upload.
+     *
+     * @return non-resumable upload retry attempts.
+     */
+    public Integer getNonResumableUploadRetryAttempts() {
+        return nonResumableUploadRetryAttempts;
+    }
+
+    /**
      * Builder class used to validate and create an instance of {@link UploaderConfig}.
      */
     public static class Builder {
@@ -260,7 +272,8 @@ public class UploaderConfig {
                 getMultipartUploadThreshold(),
                 getMultipartUploadPartRetryAttempts(),
                 getMultipartUploadPartRetryInitialInterval(),
-                getMultipartUploadTimeoutInMinutes()
+                getMultipartUploadTimeoutInMinutes(),
+                getNonResumableUploadRetryAttempts()
             );
         }
 
@@ -373,6 +386,18 @@ public class UploaderConfig {
                 Optional.ofNullable(getPropertyValue(EnvironmentProperties.BLACKDUCK_MULTIPART_UPLOAD_TIMEOUT_MINUTES.getPropertyKey()));
             return multipartUploadTimeoutMinutesProperty.map(Integer::parseInt)
                 .orElse(UploadValidator.DEFAULT_MULTIPART_UPLOAD_TIMEOUT_MINUTES);
+        }
+
+        /**
+         * Retrieve current builder value for the non-resumable (single PUT) upload retry attempts.
+         *
+         * @return configured or default non-resumable upload retry attempts.
+         */
+        public Integer getNonResumableUploadRetryAttempts() {
+            Optional<String> nonResumableUploadRetryAttemptsProperty =
+                Optional.ofNullable(getPropertyValue(EnvironmentProperties.BLACKDUCK_NON_RESUMABLE_UPLOAD_RETRY_ATTEMPTS.getPropertyKey()));
+            return nonResumableUploadRetryAttemptsProperty.map(Integer::parseInt)
+                .orElse(UploadValidator.DEFAULT_NON_RESUMABLE_UPLOAD_RETRY_ATTEMPTS);
         }
 
         private String getPropertyValue(String propertyKey) {
@@ -531,6 +556,18 @@ public class UploaderConfig {
 
         public Builder setMultipartUploadTimeoutInMinutes(Integer multipartUploadTimeoutInMinutes) {
             setPropertyValue(EnvironmentProperties.BLACKDUCK_MULTIPART_UPLOAD_TIMEOUT_MINUTES, String.valueOf(multipartUploadTimeoutInMinutes));
+            return this;
+        }
+
+        /**
+         * Replace the non-resumable (single PUT) upload retry attempts.
+         *
+         * @param nonResumableUploadRetryAttempts The maximum number of retries for a failed non-resumable upload.
+         *
+         * @return builder.
+         */
+        public Builder setNonResumableUploadRetryAttempts(Integer nonResumableUploadRetryAttempts) {
+            setPropertyValue(EnvironmentProperties.BLACKDUCK_NON_RESUMABLE_UPLOAD_RETRY_ATTEMPTS, String.valueOf(nonResumableUploadRetryAttempts));
             return this;
         }
     }

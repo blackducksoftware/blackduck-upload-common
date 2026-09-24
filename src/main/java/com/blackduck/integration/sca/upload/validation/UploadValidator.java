@@ -40,6 +40,9 @@ public class UploadValidator {
     public static final long DEFAULT_MULTIPART_UPLOAD_PART_RETRY_INITIAL_INTERVAL = 1000L;
     // The default timeout value when performing part uploads.
     public static final int DEFAULT_MULTIPART_UPLOAD_TIMEOUT_MINUTES = 10;
+    // The default number of retry attempts for a non-resumable (single PUT) upload. Kept low so a hanging
+    // or failing REST call doesn't make Detect wait through a long exponential backoff before reporting failure.
+    public static final int DEFAULT_NON_RESUMABLE_UPLOAD_RETRY_ATTEMPTS = 1;
     // The response status codes to perform a retry upload against.
     public static final Set<Integer> MULTIPART_UPLOAD_PART_RETRY_STATUS_CODES = new HashSet<>(
         Arrays.asList(

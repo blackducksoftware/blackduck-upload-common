@@ -51,6 +51,7 @@ public class ScassUploader {
     private final int chunkSize;
     private final long multipartUploadPartRetryInitialInterval;
     private final int multipartUploadPartRetryAttempts;
+    private final int nonResumableUploadRetryAttempts;
 
     /**
      * A single upload attempt that returns a {@link ScassUploadStatus} for both
@@ -64,13 +65,14 @@ public class ScassUploader {
 
     public ScassUploader(
         IntHttpClient client, UploadValidator uploadValidator, int chunkSize, long multipartUploadPartRetryInitialInterval,
-        int multipartUploadPartRetryAttempts
+        int multipartUploadPartRetryAttempts, int nonResumableUploadRetryAttempts
     ) {
         this.client = client;
         this.uploadValidator = uploadValidator;
         this.chunkSize = chunkSize;
         this.multipartUploadPartRetryInitialInterval = multipartUploadPartRetryInitialInterval;
         this.multipartUploadPartRetryAttempts = multipartUploadPartRetryAttempts;
+        this.nonResumableUploadRetryAttempts = nonResumableUploadRetryAttempts;
     }
 
     public ScassUploadStatus upload(HttpMethod method, String signedUrl, Map<String, String> headers, Path uploadFilePath)
@@ -97,7 +99,7 @@ public class ScassUploader {
             .bodyContent(new FileBodyContent(uploadFilePath.toFile(), null))
             .build();
 
-        return executeWithRetry("non-resumable PUT upload", () -> {
+        return executeWithRetry("non-resumable PUT upload", nonResumableUploadRetryAttempts, () -> {
             Response response = null;
             try {
                 response = client.execute(request);
@@ -201,7 +203,7 @@ public class ScassUploader {
 
         String chunkId = chunkHeaders.get(HttpHeaders.CONTENT_RANGE);
 
-        return executeWithRetry(chunkId, () -> {
+        return executeWithRetry(chunkId, multipartUploadPartRetryAttempts, () -> {
             Response response = null;
             try {
                 response = client.execute(request);
@@ -235,15 +237,17 @@ public class ScassUploader {
     }
 
     /**
-     * Runs {@code attempt} once, then retries on error with exponential backoff.
-     * Both PUT paths (resumable chunks and non-resumable) share this loop so that
-     * retry policy lives in exactly one place.
+     * Runs {@code attempt} once, then retries on error with exponential backoff, up to
+     * {@code maxRetryAttempts} times. Both PUT paths (resumable chunks and non-resumable)
+     * share this loop so that the backoff behavior lives in exactly one place, but each
+     * path passes its own retry limit: {@link #multipartUploadPartRetryAttempts} for
+     * resumable chunks, {@link #nonResumableUploadRetryAttempts} for non-resumable uploads.
      */
-    private ScassUploadStatus executeWithRetry(String operationLabel, UploadAttempt attempt) throws IntegrationException {
+    private ScassUploadStatus executeWithRetry(String operationLabel, int maxRetryAttempts, UploadAttempt attempt) throws IntegrationException {
         ScassUploadStatus lastStatus = runAttempt(attempt);
         long interval = multipartUploadPartRetryInitialInterval;
 
-        for (int retryCount = 1; retryCount <= multipartUploadPartRetryAttempts && lastStatus.isError(); retryCount++, interval *= 2) {
+        for (int retryCount = 1; retryCount <= maxRetryAttempts && lastStatus.isError(); retryCount++, interval *= 2) {
             logger.warn("Upload of '{}' failed on attempt {}. Retrying in {} ms.", operationLabel, retryCount, interval);
             try {
                 Thread.sleep(interval);
@@ -254,7 +258,7 @@ public class ScassUploader {
         }
 
         if (lastStatus.isError()) {
-            logger.error("All {} upload attempt(s) failed for '{}'.", multipartUploadPartRetryAttempts + 1, operationLabel);
+            logger.error("All {} upload attempt(s) failed for '{}'.", maxRetryAttempts + 1, operationLabel);
         }
         return lastStatus;
     }

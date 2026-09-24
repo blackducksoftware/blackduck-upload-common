@@ -53,7 +53,8 @@ class UploaderConfigTest {
             .setMultipartUploadThreshold(MULTIPART_UPLOAD_THRESHOLD)
             .setMultipartUploadPartRetryAttempts(UploadValidator.DEFAULT_MULTIPART_UPLOAD_PART_RETRY_ATTEMPTS)
             .setMultipartUploadPartRetryInitialInterval(UploadValidator.DEFAULT_MULTIPART_UPLOAD_PART_RETRY_INITIAL_INTERVAL)
-            .setMultipartUploadTimeoutInMinutes(UploadValidator.DEFAULT_MULTIPART_UPLOAD_TIMEOUT_MINUTES);
+            .setMultipartUploadTimeoutInMinutes(UploadValidator.DEFAULT_MULTIPART_UPLOAD_TIMEOUT_MINUTES)
+            .setNonResumableUploadRetryAttempts(UploadValidator.DEFAULT_NON_RESUMABLE_UPLOAD_RETRY_ATTEMPTS);
 
         UploaderConfig uploaderConfig = assertDoesNotThrow(uploaderConfigBuilder::build);
         assertEquals(PROXY_INFO, uploaderConfig.getProxyInfo());
@@ -66,6 +67,7 @@ class UploaderConfigTest {
         assertEquals(UploadValidator.DEFAULT_MULTIPART_UPLOAD_PART_RETRY_ATTEMPTS, uploaderConfig.getMultipartUploadPartRetryAttempts());
         assertEquals(UploadValidator.DEFAULT_MULTIPART_UPLOAD_PART_RETRY_INITIAL_INTERVAL, uploaderConfig.getMultipartUploadPartRetryInitialInterval());
         assertEquals(UploadValidator.DEFAULT_MULTIPART_UPLOAD_TIMEOUT_MINUTES, uploaderConfig.getMultipartUploadTimeoutInMinutes());
+        assertEquals(UploadValidator.DEFAULT_NON_RESUMABLE_UPLOAD_RETRY_ATTEMPTS, uploaderConfig.getNonResumableUploadRetryAttempts());
     }
 
     @Test
@@ -85,7 +87,8 @@ class UploaderConfigTest {
             .setMultipartUploadThreshold(MULTIPART_UPLOAD_THRESHOLD)
             .setMultipartUploadPartRetryAttempts(UploadValidator.DEFAULT_MULTIPART_UPLOAD_PART_RETRY_ATTEMPTS)
             .setMultipartUploadPartRetryInitialInterval(UploadValidator.DEFAULT_MULTIPART_UPLOAD_PART_RETRY_INITIAL_INTERVAL)
-            .setMultipartUploadTimeoutInMinutes(UploadValidator.DEFAULT_MULTIPART_UPLOAD_TIMEOUT_MINUTES);
+            .setMultipartUploadTimeoutInMinutes(UploadValidator.DEFAULT_MULTIPART_UPLOAD_TIMEOUT_MINUTES)
+            .setNonResumableUploadRetryAttempts(UploadValidator.DEFAULT_NON_RESUMABLE_UPLOAD_RETRY_ATTEMPTS);
 
         IntegrationException integrationException = assertThrows(IntegrationException.class, uploaderConfigBuilder::build);
         EnvironmentProperties.getRequiredPropertyKeys().forEach(key -> assertTrue(integrationException.getMessage().contains(key)));
@@ -110,6 +113,7 @@ class UploaderConfigTest {
         assertEquals(UploadValidator.DEFAULT_MULTIPART_UPLOAD_PART_RETRY_ATTEMPTS, uploaderConfig.getMultipartUploadPartRetryAttempts());
         assertEquals(UploadValidator.DEFAULT_MULTIPART_UPLOAD_PART_RETRY_INITIAL_INTERVAL, uploaderConfig.getMultipartUploadPartRetryInitialInterval());
         assertEquals(UploadValidator.DEFAULT_MULTIPART_UPLOAD_TIMEOUT_MINUTES, uploaderConfig.getMultipartUploadTimeoutInMinutes());
+        assertEquals(UploadValidator.DEFAULT_NON_RESUMABLE_UPLOAD_RETRY_ATTEMPTS, uploaderConfig.getNonResumableUploadRetryAttempts());
     }
 
     @Test
@@ -180,5 +184,12 @@ class UploaderConfigTest {
         IntegrationException integrationException = assertThrows(IntegrationException.class, uploaderConfigBuilder::build);
         assertFalse(integrationException.getMessage().contains(EnvironmentProperties.BLACKDUCK_MULTIPART_UPLOAD_TIMEOUT_MINUTES.getPropertyKey()));
 
+    }
+
+    @Test
+    void testOptionalBuildValidationNonResumableUploadRetryAttempts() {
+        UploaderConfig.Builder uploaderConfigBuilder = assertDoesNotThrow(() -> UploaderConfig.createConfigFromFile(PROXY_INFO, testPropertiesFile));
+        IntegrationException integrationException = assertThrows(IntegrationException.class, uploaderConfigBuilder::build);
+        assertFalse(integrationException.getMessage().contains(EnvironmentProperties.BLACKDUCK_NON_RESUMABLE_UPLOAD_RETRY_ATTEMPTS.getPropertyKey()));
     }
 }

@@ -44,6 +44,8 @@ public class ScassUploaderTest {
 
     private static final int MULTIPART_UPLOAD_PART_RETRY_ATTEMPTS = 2;
 
+    private static final int NON_RESUMABLE_UPLOAD_RETRY_ATTEMPTS = 1;
+
     private static final ScassUploadStatus OK_UPLOAD_STATUS = new ScassUploadStatus(200, "OK", null, "Success");
 
     private static final ScassUploadStatus BAD_REQUEST_UPLOAD_STATUS = new ScassUploadStatus(400, "Bad Request", null, "Error");
@@ -69,7 +71,7 @@ public class ScassUploaderTest {
         MockitoAnnotations.openMocks(this);
 
         scassUploader = new ScassUploader(client, uploadValidator, CHUNK_SIZE, MULTIPART_UPLOAD_PART_RETRY_INITIAL_INTERVAL,
-            MULTIPART_UPLOAD_PART_RETRY_ATTEMPTS
+            MULTIPART_UPLOAD_PART_RETRY_ATTEMPTS, NON_RESUMABLE_UPLOAD_RETRY_ATTEMPTS
         );
     }
 
@@ -105,8 +107,8 @@ public class ScassUploaderTest {
         assertEquals(BAD_REQUEST_UPLOAD_STATUS.getContent(), status.getContent());
         assertEquals(integException, status.getException().get());
 
-        Mockito.verify(client, times(MULTIPART_UPLOAD_PART_RETRY_ATTEMPTS + 1)).execute(any(Request.class));
-        Mockito.verify(response, times(MULTIPART_UPLOAD_PART_RETRY_ATTEMPTS + 1)).close();
+        Mockito.verify(client, times(NON_RESUMABLE_UPLOAD_RETRY_ATTEMPTS + 1)).execute(any(Request.class));
+        Mockito.verify(response, times(NON_RESUMABLE_UPLOAD_RETRY_ATTEMPTS + 1)).close();
     }
 
     @Test
@@ -142,7 +144,7 @@ public class ScassUploaderTest {
         assertEquals(-1, status.getStatusCode());
         assertEquals(integException, status.getException().get());
 
-        Mockito.verify(client, times(MULTIPART_UPLOAD_PART_RETRY_ATTEMPTS + 1)).execute(any(Request.class));
+        Mockito.verify(client, times(NON_RESUMABLE_UPLOAD_RETRY_ATTEMPTS + 1)).execute(any(Request.class));
     }
 
     @Test
