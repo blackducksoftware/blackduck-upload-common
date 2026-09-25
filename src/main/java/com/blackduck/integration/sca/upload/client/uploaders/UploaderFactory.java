@@ -91,7 +91,8 @@ public class UploaderFactory {
         return new ScassUploader(createScassHttpClientWithProxyInfo(), createUploadValidator(),
             uploaderConfig.getUploadChunkSize(),
             uploaderConfig.getMultipartUploadPartRetryInitialInterval(),
-            uploaderConfig.getMultipartUploadPartRetryAttempts()
+            uploaderConfig.getMultipartUploadPartRetryAttempts(),
+            uploaderConfig.getNonResumableUploadRetryAttempts()
         );
     }
 
