@@ -9,6 +9,8 @@
 package com.blackduck.integration.sca.upload.client.uploaders;
 
 import com.blackduck.integration.log.IntLogger;
+import org.apache.commons.lang3.StringUtils;
+import com.blackduck.integration.rest.HttpUrl;
 import com.blackduck.integration.rest.client.IntHttpClient;
 import com.blackduck.integration.rest.proxy.ProxyInfo;
 import com.blackduck.integration.sca.upload.client.UploaderConfig;
@@ -117,15 +119,16 @@ public class UploaderFactory {
     }
 
     private BlackDuckHttpClient createHttpClient() {
-        return new BlackDuckHttpClient(
-            intLogger,
-            gson,
-            uploaderConfig.getBlackDuckTimeoutInSeconds(),
-            uploaderConfig.isAlwaysTrustServerCertificate(),
-            uploaderConfig.getProxyInfo(),
-            uploaderConfig.getBlackDuckUrl(),
-            uploaderConfig.getApiToken()
-        );
+        int timeout = uploaderConfig.getBlackDuckTimeoutInSeconds();
+        boolean trustCert = uploaderConfig.isAlwaysTrustServerCertificate();
+        ProxyInfo proxy = uploaderConfig.getProxyInfo();
+        HttpUrl url = uploaderConfig.getBlackDuckUrl();
+
+        String bearerToken = uploaderConfig.getBearerToken();
+        if (StringUtils.isNotBlank(bearerToken)) {
+            return BlackDuckHttpClient.withBearerToken(intLogger, gson, timeout, trustCert, proxy, url, bearerToken);
+        }
+        return new BlackDuckHttpClient(intLogger, gson, timeout, trustCert, proxy, url, uploaderConfig.getApiToken());
     }
 
     private IntHttpClient createScassHttpClientWithProxyInfo() {
