@@ -14,6 +14,7 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import com.blackduck.integration.exception.IntegrationException;
 import com.blackduck.integration.properties.PropertiesManager;
@@ -37,6 +38,7 @@ public class UploaderConfig {
     private final boolean alwaysTrustServerCertificate;
     private final HttpUrl blackDuckUrl;
     private final String apiToken;
+    private final String bearerToken;
     private final Long multipartUploadThreshold;
     private final int multipartUploadPartRetryAttempts;
     private final long multipartUploadPartRetryInitialInterval;
@@ -121,6 +123,7 @@ public class UploaderConfig {
         boolean alwaysTrustServerCertificate,
         HttpUrl blackDuckUrl,
         String apiToken,
+        String bearerToken,
         Long multipartUploadThreshold,
         int multipartUploadPartRetryAttempts,
         long multipartUploadPartRetryInitialInterval,
@@ -133,6 +136,7 @@ public class UploaderConfig {
         this.alwaysTrustServerCertificate = alwaysTrustServerCertificate;
         this.blackDuckUrl = blackDuckUrl;
         this.apiToken = apiToken;
+        this.bearerToken = bearerToken;
         this.multipartUploadThreshold = multipartUploadThreshold;
         this.multipartUploadPartRetryAttempts = multipartUploadPartRetryAttempts;
         this.multipartUploadPartRetryInitialInterval = multipartUploadPartRetryInitialInterval;
@@ -195,6 +199,15 @@ public class UploaderConfig {
     }
 
     /**
+     * Retrieve the Black Duck bearer token.
+     *
+     * @return bearer token.
+     */
+    public String getBearerToken() {
+        return bearerToken;
+    }
+
+    /**
      * Retrieve the multipart upload threshold.
      *
      * @return multipart upload threshold.
@@ -245,6 +258,7 @@ public class UploaderConfig {
     public static class Builder {
         ProxyInfo proxyInfo;
         PropertiesManager propertiesManager;
+        private String bearerToken;
 
         private Builder(ProxyInfo proxyInfo, PropertiesManager propertiesManager) {
             this.proxyInfo = proxyInfo;
@@ -261,7 +275,7 @@ public class UploaderConfig {
         public UploaderConfig build() throws IntegrationException {
             validate();
 
-            // Black Duck URL and API token are validated prior to construction, therefore those values should never be null.
+            // Black Duck URL and a token (API or bearer) are validated prior to construction.
             return new UploaderConfig(
                 proxyInfo,
                 getUploadChunkSize(),
@@ -269,6 +283,7 @@ public class UploaderConfig {
                 isAlwaysTrustServerCertificate(),
                 getBlackDuckUrl().orElse(null),
                 getApiToken().orElse(null),
+                bearerToken,
                 getMultipartUploadThreshold(),
                 getMultipartUploadPartRetryAttempts(),
                 getMultipartUploadPartRetryInitialInterval(),
@@ -280,13 +295,21 @@ public class UploaderConfig {
         private void validate() throws IntegrationException {
             List<UploadError> nullPropertyKeys = EnvironmentProperties.getRequiredPropertyKeys()
                 .stream()
-                .filter(propertyKey -> getPropertyValue(propertyKey) == null)
+                .filter(this::isRequiredPropertyMissing)
                 .map(property -> new UploadError(ErrorCode.MISSING_REQUIRED_PROPERTY_ERROR, property))
                 .collect(Collectors.toList());
 
             if (CollectionUtils.isNotEmpty(nullPropertyKeys)) {
                 throw new UploaderValidationException(nullPropertyKeys);
             }
+        }
+
+        // Bearer token substitutes for api token; when it is present the api token is not required.
+        private boolean isRequiredPropertyMissing(String propertyKey) {
+            if (StringUtils.isNotBlank(bearerToken) && EnvironmentProperties.BLACKDUCK_API_TOKEN.getPropertyKey().equals(propertyKey)) {
+                return false;
+            }
+            return getPropertyValue(propertyKey) == null;
         }
 
 
@@ -516,6 +539,27 @@ public class UploaderConfig {
         public Builder setApiToken(String apiToken) {
             setPropertyValue(EnvironmentProperties.BLACKDUCK_API_TOKEN, apiToken);
             return this;
+        }
+
+        /**
+         * Set a pre-issued bearer token for authentication, bypassing the api token exchange.
+         *
+         * @param bearerToken The bearer token to attach directly as {@code Authorization: Bearer <token>}.
+         *
+         * @return Builder.
+         */
+        public Builder setBearerToken(String bearerToken) {
+            this.bearerToken = bearerToken;
+            return this;
+        }
+
+        /**
+         * Retrieve the current builder value for the bearer token.
+         *
+         * @return {@link Optional} configured bearer token.
+         */
+        public Optional<String> getBearerToken() {
+            return Optional.ofNullable(bearerToken);
         }
 
         /**

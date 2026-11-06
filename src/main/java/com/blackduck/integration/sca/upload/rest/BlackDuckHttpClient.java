@@ -28,6 +28,8 @@ import com.blackduck.integration.rest.proxy.ProxyInfo;
 import com.blackduck.integration.rest.response.Response;
 import com.blackduck.integration.rest.support.AuthenticationSupport;
 import com.google.gson.Gson;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.http.client.methods.RequestBuilder;
 
 /**
  * The class to execute Black Duck REST API requests to a Black Duck server.
@@ -42,6 +44,8 @@ public class BlackDuckHttpClient extends AuthenticatingIntHttpClient {
     private final Gson gson;
     private final HttpUrl blackDuckUrl;
     private final String apiToken;
+    private String bearerToken;
+    private String authorizationHeaderValue;
     private final AuthenticationSupport authenticationSupport = new AuthenticationSupport();
 
     /**
@@ -128,6 +132,35 @@ public class BlackDuckHttpClient extends AuthenticatingIntHttpClient {
         this.apiToken = apiToken;
     }
 
+    /**
+     * Create an HTTP client configured for bearer token authentication, bypassing the api token exchange.
+     * @param logger                       The {@link IntLogger} to log messages.
+     * @param gson                         The object to serialize/deserialize data.
+     * @param timeoutInSeconds             The timeout for the HTTP client.
+     * @param alwaysTrustServerCertificate True to trust all server certificates.
+     * @param proxyInfo                    The proxy information, or {@link ProxyInfo#NO_PROXY_INFO}.
+     * @param blackDuckUrl                 The {@link HttpUrl} of the Black Duck server.
+     * @param bearerToken                  The pre-issued bearer token for authentication.
+     */
+    public static BlackDuckHttpClient withBearerToken(
+        IntLogger logger,
+        Gson gson,
+        int timeoutInSeconds,
+        boolean alwaysTrustServerCertificate,
+        ProxyInfo proxyInfo,
+        HttpUrl blackDuckUrl,
+        String bearerToken
+    ) {
+        if (StringUtils.isBlank(bearerToken)) {
+            throw new IllegalArgumentException("No bearer token was found.");
+        }
+        BlackDuckHttpClient client = new BlackDuckHttpClient(logger, gson, timeoutInSeconds, alwaysTrustServerCertificate, proxyInfo, blackDuckUrl, null);
+        client.bearerToken = bearerToken;
+        client.authorizationHeaderValue = "Bearer " + bearerToken;
+        client.addCommonRequestHeader(AuthenticationSupport.AUTHORIZATION_HEADER, client.authorizationHeaderValue);
+        return client;
+    }
+
     @Override
     public boolean isAlreadyAuthenticated(HttpUriRequest request) {
         return Arrays.stream(request.getHeaders(AuthenticationSupport.AUTHORIZATION_HEADER))
@@ -137,14 +170,30 @@ public class BlackDuckHttpClient extends AuthenticatingIntHttpClient {
 
     @Override
     public Response attemptAuthentication() throws IntegrationException {
+        if (bearerToken != null) {
+            // Bearer token mode: probe connectivity with GET /api/current-user instead of POST /api/tokens/authenticate.
+            // The Authorization header is added explicitly because common headers may not propagate
+            // through the Apache client bypass path used by authenticationSupport.attemptAuthentication.
+            HttpUrl currentUserUrl = getBlackDuckUrl().appendRelativeUrl("api/current-user");
+            RequestBuilder requestBuilder = RequestBuilder.get()
+                .addHeader(AuthenticationSupport.AUTHORIZATION_HEADER, authorizationHeaderValue);
+            return authenticationSupport.attemptAuthentication(this, currentUserUrl, requestBuilder);
+        }
         Map<String, String> headers = new HashMap<>();
         headers.put(AuthenticationSupport.AUTHORIZATION_HEADER, "token " + getApiToken());
-
         return authenticationSupport.attemptAuthentication(this, getBlackDuckUrl(), AUTHENTICATION_SUFFIX, headers);
     }
 
     @Override
     protected void completeAuthenticationRequest(HttpUriRequest request, Response response) {
+        if (bearerToken != null) {
+            // Re-add the bearer header stripped by handleErrorResponse on 401.
+            // Bearer tokens are externally issued — we cannot fetch a new one, so we re-add the same token.
+            // If the token is truly expired the retry will 401 again and exhaust the retry loop.
+            request.setHeader(AuthenticationSupport.AUTHORIZATION_HEADER, authorizationHeaderValue);
+            addCommonRequestHeader(AuthenticationSupport.AUTHORIZATION_HEADER, authorizationHeaderValue);
+            return;
+        }
         authenticationSupport.completeTokenAuthenticationRequest(request, response, logger, getGson(), this, BEARER_RESPONSE_KEY);
     }
 
